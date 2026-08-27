@@ -2780,6 +2780,7 @@ function renderPage(){
   ({home:renderHome, bet:renderBet, members:renderMembers,
     cashier:renderCashier, data:renderData, settings:renderSettings})[state.page]();
   updatePools();
+  updateLive();
   saveState();
 }
 function rerender(){ renderPage(); }
