@@ -1,0 +1,3535 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>UNION9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<style>
+  /* ============ トークン（ダーク単一テーマにコミット） ============ */
+  :root{
+    --ground:#0B1220;
+    --surface:#131C2E;
+    --surface2:#1B2740;
+    --line:#263654;
+    --text:#E8EDF6;
+    --muted:#8DA0BF;
+    --green:#38C172;
+    --green-deep:#1E7A4A;
+    --amber:#F0B94B;
+    --red:#E4587C;
+    --blue:#4C8DFF;
+    --disp:"Oswald","Noto Sans JP",sans-serif;
+    --body:"Noto Sans JP",sans-serif;
+    --sidew:212px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--ground);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  button{font-family:var(--body);cursor:pointer}
+  input,select{font-family:var(--body)}
+  .num{font-family:var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+  /* ============ アプリシェル：サイドナビ ============ */
+  .app{min-height:100vh}
+  aside.side{
+    position:fixed;top:0;bottom:0;left:0;width:var(--sidew);z-index:60;
+    background:var(--surface);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;padding:18px 12px 14px;
+  }
+  .side .logo{font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:.06em;padding:0 10px 16px}
+  .side .logo b{color:var(--amber)}
+  .side .logo small{display:block;font-family:var(--body);font-size:10px;color:var(--muted);letter-spacing:.14em;font-weight:400}
+  nav.nav{display:flex;flex-direction:column;gap:2px}
+  nav.nav button{
+    display:flex;align-items:center;gap:11px;border:0;background:transparent;color:var(--muted);
+    padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:700;letter-spacing:.03em;text-align:left;
+  }
+  nav.nav button svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  nav.nav button:hover{color:var(--text);background:rgba(76,141,255,.06)}
+  nav.nav button.on{color:#fff;background:var(--green-deep)}
+  nav.nav button .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-family:var(--disp)}
+  nav.nav button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+  .side-foot{margin-top:auto;padding:10px 12px;font-size:10.5px;color:var(--muted);line-height:1.9}
+  .side-foot a{color:var(--blue);text-decoration:none}
+
+  main{margin-left:var(--sidew);padding:0 24px 80px;max-width:1060px}
+
+  /* トップバー */
+  header.bar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:14px 0 12px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(var(--ground) 86%,rgba(11,18,32,0));
+  }
+  .union-chip{
+    display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);
+    border-radius:99px;padding:5px 14px 5px 6px;font-size:12.5px;font-weight:700;
+  }
+  .union-chip .ava{width:26px;height:26px;border-radius:50%;background:var(--green-deep);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+  .union-chip small{color:var(--muted);font-weight:400;font-family:var(--disp);letter-spacing:.06em}
+  .bal-chip{
+    margin-left:auto;display:flex;align-items:baseline;gap:5px;
+    background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:6px 16px;
+  }
+  .bal-chip .n{font-family:var(--disp);font-size:17px;font-weight:600;color:var(--amber);font-variant-numeric:tabular-nums}
+  .bal-chip small{font-size:10px;color:var(--muted);letter-spacing:.08em}
+  .roleswitch{display:flex;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .roleswitch button{border:0;background:transparent;color:var(--muted);padding:5px 11px;border-radius:6px;font-size:11px;font-weight:700}
+  .roleswitch button.on{background:var(--surface2);color:var(--amber)}
+  .roleswitch button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+  .demo-tag{font-size:9.5px;color:var(--muted);letter-spacing:.1em;align-self:center}
+
+  /* ============ 汎用 ============ */
+  h2.sec{font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--muted);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2.sec .btn{margin-left:auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .l{font-size:11px;color:var(--muted);letter-spacing:.1em;font-weight:700}
+  .stat .v{font-family:var(--disp);font-size:29px;font-weight:600;line-height:1.2;margin-top:2px;font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:14px;color:var(--muted);font-weight:500;margin-left:4px}
+  .stat .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .pos{color:var(--green)} .neg{color:var(--red)} .amb{color:var(--amber)}
+  .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.live{animation:none}}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:10.5px;color:var(--muted);letter-spacing:.1em;font-weight:700;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:0}
+  .tblwrap{overflow-x:auto}
+  tr.click{cursor:pointer}
+  tr.click:hover td{background:rgba(76,141,255,.05)}
+  tr.drill td{background:var(--ground);white-space:normal}
+
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .pill.win{color:var(--green);border-color:var(--green-deep);background:rgba(56,193,114,.08)}
+  .pill.lose{color:var(--red);border-color:rgba(228,88,124,.4);background:rgba(228,88,124,.08)}
+  .pill.pend{color:var(--amber);border-color:rgba(240,185,75,.4);background:rgba(240,185,75,.08)}
+  .pill.open{color:var(--green);border-color:var(--green-deep)}
+  .pill.closed{color:var(--muted)}
+  .pill.stop{color:var(--red);border-color:rgba(228,88,124,.4)}
+
+  .btn{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700}
+  .btn:hover{border-color:var(--green-deep)}
+  .btn.primary{background:var(--green-deep);border-color:var(--green-deep);color:#fff}
+  .btn.primary:hover{background:#249058}
+  .btn.small{padding:4px 10px;font-size:11.5px;border-radius:6px}
+  .btn.danger{color:var(--red)}
+  .btn:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+
+  input[type=number],input[type=text],input[type=password],input[type=email],input[type=time],input[type=date],select{
+    background:var(--ground);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:6px 9px;font-size:13px;font-variant-numeric:tabular-nums;
+  }
+  input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green-deep)}
+  input.w60{width:64px}
+  label.f{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+  .formgrid{display:grid;gap:10px}
+  .inline{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+
+  /* 試合カード */
+  .match{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
+  .match .meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .match .meta .cd{font-family:var(--disp);font-size:12.5px;color:var(--amber)}
+  .match .meta .cd.over{color:var(--muted)}
+  .match.betting{border-color:var(--green-deep);box-shadow:0 0 0 1px var(--green-deep)}
+  .match .teams{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .match .team{font-size:16px;font-weight:900;letter-spacing:.02em}
+  .match .vs{font-family:var(--disp);font-size:11px;color:var(--muted);letter-spacing:.2em}
+  .hcap{text-align:center;background:var(--ground);border:1px dashed var(--line);border-radius:9px;padding:6px 8px;font-size:12px;color:var(--muted)}
+  .hcap b{color:var(--amber);font-family:var(--disp);font-size:16px;font-weight:600;margin:0 3px}
+  .betrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .betbtn{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:9px;padding:9px 6px;font-size:13px;font-weight:700}
+  .betbtn:hover:not(:disabled){border-color:var(--green);background:rgba(56,193,114,.08)}
+  .betbtn:disabled{opacity:.35;cursor:not-allowed}
+  .betbtn small{display:block;font-size:10px;color:var(--muted);font-weight:500;margin-top:1px}
+  .matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+
+  /* 試合速報カード */
+  .livepill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.1em;padding:2px 10px;border-radius:99px;background:rgba(228,88,124,.14);border:1px solid rgba(228,88,124,.5);color:var(--red)}
+  .livepill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.4s infinite}
+  @media (prefers-reduced-motion:reduce){.livepill::before{animation:none}}
+  .scorebox{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center;padding:4px 0 2px}
+  .scorebox .s-team{font-size:15px;font-weight:900;letter-spacing:.02em}
+  .scorebox .s-score{font-family:var(--disp);font-size:40px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .inning{font-family:var(--disp);font-size:12.5px;color:var(--amber);letter-spacing:.06em}
+  .mybet{font-size:11.5px;color:var(--muted);background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:6px 10px;text-align:center}
+  .mybet b{color:var(--text)}
+
+  .pbar{height:10px;border-radius:6px;overflow:hidden;background:rgba(76,141,255,.35);display:flex}
+  .pbar i{display:block;height:100%;background:var(--green-deep)}
+  .pmeta{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);gap:8px}
+  .pmeta b{color:var(--text)}
+  .pool{display:flex;flex-direction:column;gap:4px}
+
+  .chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:8px 4px 0}
+  .chart .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end;min-width:0}
+  .chart .bar i{display:block;width:100%;max-width:38px;border-radius:3px 3px 0 0}
+  .chart .bar.up i{background:linear-gradient(180deg,var(--green),var(--green-deep))}
+  .chart .bar.down i{background:linear-gradient(180deg,var(--red),#8f2f4b)}
+  .chart .bar span{font-size:9.5px;color:var(--muted);font-family:var(--disp);white-space:nowrap}
+  .periodbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .periodbar button{border:1px solid var(--line);background:var(--ground);color:var(--muted);border-radius:99px;padding:4px 13px;font-size:11.5px;font-weight:700}
+  .periodbar button.on{color:#fff;background:var(--green-deep);border-color:var(--green-deep)}
+  .periodbar .range{display:flex;gap:6px;align-items:center;margin-left:auto;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  .pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:6px}
+  .pstats div{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:8px 12px}
+  .pstats .k{font-size:10px;color:var(--muted);letter-spacing:.1em;font-weight:700}
+  .pstats .n{font-family:var(--disp);font-size:19px;font-variant-numeric:tabular-nums}
+
+  /* モーダル・トースト */
+  .overlay{position:fixed;inset:0;background:rgba(4,8,16,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:400px;padding:22px}
+  .modal.wide{max-width:640px;max-height:82vh;overflow-y:auto}
+  .modal h3{margin:0 0 4px;font-size:16px;font-weight:900}
+  .modal .mh{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .modal .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .modal .row .k{color:var(--muted)}
+  .amt input{width:100%;font-size:20px;font-family:var(--disp);padding:10px 12px;margin:10px 0 4px}
+  .quick{display:flex;gap:6px;margin-bottom:12px}
+  .quick button{flex:1;border:1px solid var(--line);background:var(--ground);color:var(--muted);border-radius:6px;padding:5px 0;font-size:11.5px}
+  .quick button:hover{color:var(--text);border-color:var(--green-deep)}
+  .modal .actions{display:flex;gap:8px;margin-top:16px}
+  .modal .actions .btn{flex:1;padding:11px}
+  .terms h4{font-size:13px;margin:18px 0 6px;color:var(--amber)}
+  .terms p,.terms li{font-size:12.5px;color:var(--muted);line-height:1.9}
+  .terms strong{color:var(--text)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-deep);color:#fff;font-weight:700;font-size:13px;padding:11px 22px;border-radius:99px;transition:transform .25s;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+  .flowbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:8px 0 4px}
+  .flowbar div{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.04em;min-width:0;overflow:hidden}
+  .flowbar .f1{background:var(--green-deep);color:#fff}
+  .flowbar .f2{background:rgba(240,185,75,.85);color:#20180a}
+  .flowbar .f3{background:var(--surface2);color:var(--muted)}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+
+  .refcode{display:flex;align-items:center;gap:12px;background:var(--ground);border:1px dashed var(--amber);border-radius:10px;padding:12px 16px;flex-wrap:wrap}
+  .refcode .code{font-family:var(--disp);font-size:22px;font-weight:600;letter-spacing:.18em;color:var(--amber)}
+
+  /* ユニオンカード */
+  .uni-card{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .uni-card.active{border-color:var(--green-deep);background:linear-gradient(135deg,rgba(30,122,74,.14),var(--surface) 55%)}
+  .uni-card .ava{width:44px;height:44px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+  .uni-card .info{flex:1;min-width:0}
+  .uni-card .nm{font-weight:900;font-size:14.5px}
+  .uni-card .meta2{font-size:11px;color:var(--muted)}
+  .uni-list{display:grid;gap:10px}
+  .uni-card.click{cursor:pointer}
+  .uni-card.click:hover{border-color:var(--green-deep)}
+  .uni-card .arrow{color:var(--muted);font-size:16px;flex:none}
+
+  /* お知らせ */
+  .news{display:grid;gap:0}
+  .news div{display:flex;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .news div:last-child{border-bottom:0}
+  .news .d{color:var(--muted);font-family:var(--disp);flex:none}
+
+  /* 設定 */
+  .setrow{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line)}
+  .setrow:last-child{border-bottom:0}
+  .setrow .t{font-weight:700;font-size:13.5px}
+  .setrow .desc{font-size:11px;color:var(--muted)}
+  .setrow .end{margin-left:auto}
+  .switch{position:relative;width:42px;height:24px;flex:none}
+  .switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .switch i{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--line);border-radius:99px;transition:.15s;pointer-events:none}
+  .switch i::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.15s}
+  .switch input:checked + i{background:var(--green-deep);border-color:var(--green-deep)}
+  .switch input:checked + i::after{left:20px;background:#fff}
+  .profile{display:flex;align-items:center;gap:14px}
+  .profile .pava{width:54px;height:54px;border-radius:50%;background:var(--green-deep);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900}
+
+  .page{display:none}
+  .page.on{display:block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .hint b{color:var(--amber)}
+  a.link{color:var(--blue);text-decoration:none}
+  a.link:hover{text-decoration:underline}
+  .minibets{font-size:11px;color:var(--muted);line-height:1.9}
+  .minibets b{color:var(--text)}
+  .empty{color:var(--muted);font-size:12.5px}
+
+  .nl-s{display:none}
+
+  /* デモ操作フローティングボタン */
+  .demo-fab{
+    position:fixed;right:16px;bottom:20px;z-index:95;
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+    background:var(--surface2);font-size:20px;box-shadow:0 6px 20px rgba(0,0,0,.45);
+  }
+  .demo-fab:hover{border-color:var(--amber)}
+  @media(max-width:840px){ .demo-fab{bottom:76px} }
+
+  /* ============ スマホ最適化（文字バランス・密度） ============ */
+  @media(max-width:840px){
+    main{padding:0 12px 90px}
+    .cards{grid-template-columns:repeat(2,1fr);gap:9px}
+    .stat{padding:11px 12px}
+    .stat .v{font-size:21px}
+    .stat .l{font-size:10px}
+    .stat .sub{font-size:10.5px}
+    h2.sec{margin:24px 0 10px;font-size:11.5px}
+    .panel{padding:12px}
+    th,td{padding:7px 6px;font-size:12px}
+    .hide-m{display:none}
+    .pstats{grid-template-columns:repeat(2,1fr)}
+    .pstats .n{font-size:16px}
+    .match .team{font-size:14.5px}
+    .scorebox .s-score{font-size:31px}
+    .betbtn{font-size:12px;padding:8px 4px}
+    .union-chip{font-size:11px;padding:4px 10px 4px 5px}
+    .union-chip .ava{width:22px;height:22px;font-size:12px}
+    .bal-chip{padding:5px 12px}
+    .bal-chip .n{font-size:14px}
+    .demo-tag{display:none}
+    .uni-card{padding:11px 12px}
+    .uni-card .nm{font-size:13px}
+    .uni-card .meta2{font-size:10px}
+    .setrow .t{font-size:12.5px}
+    .setrow .desc{font-size:10px}
+    .periodbar .range{margin-left:0;width:100%}
+    .refcode .code{font-size:17px;letter-spacing:.12em}
+  }
+  .demo-menu .btn{width:100%;text-align:left;margin-top:8px}
+  .demo-menu .desc{font-size:10.5px;color:var(--muted);margin:2px 0 0;line-height:1.6}
+
+  /* ============ 認証画面（ログイン／新規登録） ============ */
+  .auth-ov{
+    position:fixed;inset:0;z-index:300;display:none;
+    align-items:center;justify-content:center;padding:20px;
+    background:radial-gradient(120% 90% at 50% 0%, #14213a 0%, var(--ground) 60%);
+    overflow-y:auto;
+  }
+  .auth-ov.show{display:flex}
+  .auth-box{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px 26px 20px;margin:auto}
+  .a-logo{font-family:var(--disp);font-weight:700;font-size:38px;letter-spacing:.06em;text-align:center;line-height:1.1}
+  .a-logo b{color:var(--amber)}
+  .a-tag{font-size:11.5px;color:var(--muted);text-align:center;letter-spacing:.1em;margin-top:4px}
+  .a-tabs{display:flex;gap:3px;background:var(--ground);border:1px solid var(--line);border-radius:10px;padding:3px;margin:20px 0 16px}
+  .a-tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:8px 0;border-radius:7px;font-size:13px;font-weight:700}
+  .a-tabs button.on{background:var(--green-deep);color:#fff}
+  .a-form{display:grid;gap:11px}
+  .a-form input{padding:10px 12px;font-size:14px}
+  .a-form .btn{padding:11px}
+  .a-forgot{font-size:11.5px;text-align:center}
+  .a-terms{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;color:var(--muted);line-height:1.7}
+  .a-terms input{margin-top:3px}
+  .a-foot{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:10px;color:var(--muted);text-align:center;letter-spacing:.06em}
+  .a-err{font-size:11.5px;color:var(--red);min-height:0}
+
+  /* ============ モバイル：ボトムタブ ============ */
+  @media(max-width:840px){
+    .nl-f{display:none}
+    .nl-s{display:inline;white-space:nowrap}
+    aside.side{top:auto;bottom:0;left:0;right:0;width:auto;height:62px;flex-direction:row;align-items:stretch;padding:0;border-right:0;border-top:1px solid var(--line)}
+    .side .logo,.side-foot{display:none}
+    nav.nav{flex-direction:row;flex:1}
+    nav.nav button{flex:1;flex-direction:column;gap:2px;justify-content:center;align-items:center;font-size:9px;padding:6px 2px;border-radius:0;letter-spacing:0}
+    nav.nav button.on{background:transparent;color:var(--green)}
+    nav.nav button .badge{position:absolute;transform:translate(12px,-14px);margin:0}
+    nav.nav button{position:relative}
+    main{margin-left:0;padding:0 14px 90px}
+    header.bar{gap:8px}
+    .roleswitch button{padding:5px 8px;font-size:10px}
+  }
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="logo">UNION<b>9</b><small>野球ハンデ予想ゲーム</small></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
+      UIプロトタイプ v0.4.0
+    </div>
+  </aside>
+
+  <main>
+    <header class="bar">
+      <div class="union-chip"><span class="ava">⚾</span><span id="tb-union">東京セントラルユニオン</span><small id="tb-uid">#482913</small></div>
+      <div class="bal-chip"><span class="n" id="tb-bal">0</span><small>P</small><small id="tb-bal-l">保有</small></div>
+      <span class="demo-tag">デモ：ロール切替 →</span>
+      <div class="roleswitch" id="roleswitch">
+        <button data-role="user" class="on">ユーザー</button>
+        <button data-role="agent">エージェント</button>
+        <button data-role="union">ユニオン</button>
+        <button data-role="admin">運営</button>
+      </div>
+    </header>
+
+    <div class="page on" id="page-home"></div>
+    <div class="page" id="page-union"></div>
+    <div class="page" id="page-bet"></div>
+    <div class="page" id="page-members"></div>
+    <div class="page" id="page-cashier"></div>
+    <div class="page" id="page-data"></div>
+    <div class="page" id="page-settings"></div>
+  </main>
+</div>
+
+<!-- ベットモーダル -->
+<div class="overlay" id="bet-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bm-title">
+    <h3 id="bm-title">ベット確認</h3>
+    <div class="mh" id="bm-match">—</div>
+    <div class="row"><span class="k">あなたの予想</span><strong id="bm-pick">—</strong></div>
+    <div class="row"><span class="k">ハンデ</span><strong class="amb" id="bm-hcap">—</strong></div>
+    <div class="row"><span class="k">締切</span><strong id="bm-deadline">—</strong></div>
+    <div class="amt">
+      <input type="number" id="bm-amt" value="5000" step="1000" min="100" aria-label="ベットポイント">
+      <div class="quick">
+        <button data-q="1000">1,000</button><button data-q="5000">5,000</button>
+        <button data-q="10000">10,000</button><button data-q="30000">30,000</button>
+      </div>
+    </div>
+    <div class="row"><span class="k">手数料（勝ち分の<span id="bm-feerate">—</span>%）</span><span id="bm-fee">—</span></div>
+    <div class="row"><span class="k">丸勝ち時の獲得</span><strong class="pos" id="bm-win">—</strong></div>
+    <div class="row"><span class="k">分勝ち・分負け・勝負無し</span><span style="font-size:11px;color:var(--muted)"><a href="#" class="link open-hande">ハンデ表</a>に基づき割合精算／返還</span></div>
+    <div class="actions">
+      <button class="btn" id="bm-cancel">やめる</button>
+      <button class="btn primary" id="bm-ok">ベットする</button>
+    </div>
+  </div>
+</div>
+
+<!-- 利用規約モーダル -->
+<div class="overlay" id="terms-overlay">
+  <div class="modal wide terms" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+    <h3 id="terms-title">利用規約</h3>
+    <div class="mh">UNION9 サービス利用規約（プロトタイプ版・抜粋）</div>
+    <h4>第1条（サービスの性質）</h4>
+    <p>本アプリで使用するポイントは<strong>ゲーム内専用</strong>です。<strong>換金・払戻し・金銭等価物との交換は一切できません。</strong>野球を「予想して応援する」楽しみのためのゲームです。本サービスは金銭その他の財産を賭ける行為を一切提供しません。</p>
+    <h4>第2条（ポイント）</h4>
+    <p>1. ポイントは本サービス内の予想エンターテインメントにのみ使用できます。<br>
+    2. ポイントの取得は、<strong>アプリ内課金で購入したアイテム（バット・ボール等）をゲーム内でポイントに交換する方式</strong>のみです。決済はApp Store／Google Playを通じて行われ、交換後の払戻し・返金はできません。<br>
+    3. ポイントの送付・回収・リクエストは本サービスの機能内でのみ行えます。<strong>サービス外での売買・交換（いわゆるRMT）は固く禁止</strong>し、発覚した場合はアカウントを停止します。</p>
+    <h4>第3条（禁止事項）</h4>
+    <p>・ポイントの現金・物品・電子マネー等への交換、またはその仲介・勧誘<br>
+    ・サービス外の金銭のやり取りとポイント移動を対応させる行為<br>
+    ・不正アカウントの作成、なりすまし、その他運営が不適切と判断する行為</p>
+    <h4>第4条（監視・記録）</h4>
+    <p>すべてのポイント発行・移動・ベットは監査ログに記録され、運営は不正防止のためこれを監視します。</p>
+    <h4>第5条（免責）</h4>
+    <p>本サービスはエンターテインメントを目的とし、ポイントは財産的価値を持ちません。サービス終了時、ポイントは失効し補償されません。</p>
+    <div class="actions"><button class="btn primary" id="terms-close">閉じる</button></div>
+  </div>
+</div>
+
+<!-- 認証画面（ログイン／新規登録） -->
+<div class="auth-ov show" id="auth-screen">
+  <div class="auth-box">
+    <div class="a-logo">UNION<b>9</b></div>
+    <div class="a-tag">野球を予想して応援する、ユニオン制ゲーム</div>
+    <div class="a-tabs">
+      <button id="atab-login" class="on">ログイン</button>
+      <button id="atab-reg">新規登録</button>
+    </div>
+    <div class="a-form" id="aform-login">
+      <label class="f">メールアドレス<input type="email" id="l-email" placeholder="you@example.com" autocomplete="off"></label>
+      <label class="f">パスワード<input type="password" id="l-pw" placeholder="••••••••"></label>
+      <div class="a-err" id="l-err"></div>
+      <button class="btn primary" id="l-btn">ログイン</button>
+      <button class="btn" id="l-demo">デモアカウントで試す</button>
+      <a href="#" class="link a-forgot" id="l-forgot">パスワードをお忘れですか？</a>
+    </div>
+    <div class="a-form" id="aform-reg" style="display:none">
+      <label class="f">ニックネーム（必須）<input type="text" id="r-name" placeholder="例：tora_kichi"></label>
+      <label class="f">メールアドレス（必須）<input type="email" id="r-email" placeholder="you@example.com"></label>
+      <label class="f">パスワード（必須・6文字以上）<input type="password" id="r-pw"></label>
+      <label class="f">パスワード（確認）<input type="password" id="r-pw2"></label>
+      <label class="f">紹介コード（任意）<input type="text" id="r-ref" placeholder="例：TANAKA-9">
+        <span style="font-size:10.5px;color:var(--muted)">エージェントから受け取ったコード。入力すると、そのエージェントの配下として登録されます。</span>
+      </label>
+      <label class="a-terms"><input type="checkbox" id="r-terms"><span><a href="#" class="link open-terms">利用規約</a>に同意する（ポイントはゲーム内専用・換金不可）</span></label>
+      <div class="a-err" id="r-err"></div>
+      <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
+    </div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.4.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
+  </div>
+</div>
+
+<!-- ユニオン参加申請モーダル -->
+<div class="overlay" id="join-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="j-title">
+    <h3 id="j-title">ユニオン参加申請</h3>
+    <div class="mh" id="j-target">参加したいユニオンのIDと紹介IDを入力してください</div>
+    <div class="formgrid">
+      <label class="f">ユニオンID（必須）<input type="text" id="j-uid" placeholder="例：771204"></label>
+      <label class="f">紹介ID／紹介コード<input type="text" id="j-ref" placeholder="例：TANAKA-9">
+        <span style="font-size:10.5px;color:var(--muted)">どのエージェントの配下として参加するかを管理するためのコードです。エージェントから受け取っている場合は必ず入力してください。</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn" id="j-cancel">やめる</button>
+      <button class="btn primary" id="j-ok">申請する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ハンデ表モーダル -->
+<div class="overlay" id="hande-overlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="hd-title">
+    <h3 id="hd-title">プロ野球 ハンデ表</h3>
+    <div class="mh">※ハンデを出しているチーム（出し側）から見た結果。丸＝100%、n分＝n×10%の割合精算、勝負無し＝全額返還。</div>
+    <div class="tblwrap"><table>
+      <thead><tr><th>出し</th><th>引き分け</th><th>1点差で勝ち</th><th>2点差で勝ち</th><th>3点差で勝ち</th></tr></thead>
+      <tbody>
+        <tr><td class="amb">0.3</td><td>3分負け</td><td>7分勝ち</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">0.5</td><td>5分負け</td><td>5分勝ち</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">0.7</td><td>7分負け</td><td>3分勝ち</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1</td><td>丸負け</td><td>勝負無し</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1.3</td><td>丸負け</td><td>3分負け</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1.5</td><td>丸負け</td><td>5分負け</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1.7</td><td>丸負け</td><td>7分負け</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1半</td><td>丸負け</td><td>丸負け</td><td>丸勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1半3</td><td>丸負け</td><td>丸負け</td><td>7分勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1半5</td><td>丸負け</td><td>丸負け</td><td>5分勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">1半7</td><td>丸負け</td><td>丸負け</td><td>3分勝ち</td><td>丸勝ち</td></tr>
+        <tr><td class="amb">2</td><td>丸負け</td><td>丸負け</td><td>勝負無し</td><td>丸勝ち</td></tr>
+      </tbody>
+    </table></div>
+    <p class="hint">「半」は分けの無い明確なライン（例: 1半＝1点差までは丸負け、2点差から丸勝ち）。2以上のハンデも同じ法則で続きます。レーキ（手数料）はこの表の計算外で、勝ち分にのみ適用されます。</p>
+    <div class="actions"><button class="btn primary" id="hande-close">閉じる</button></div>
+  </div>
+</div>
+
+<!-- デモ操作パネル -->
+<button class="demo-fab" id="demo-fab" title="デモ操作">🎮</button>
+<div class="overlay" id="demo-overlay">
+  <div class="modal demo-menu" role="dialog" aria-modal="true" aria-labelledby="dm-title">
+    <h3 id="dm-title">🎮 デモ操作</h3>
+    <div class="mh">プレゼン用のシナリオ操作です（実アプリには存在しません）</div>
+    <button class="btn" id="demo-adv">⚾ ライブ試合を1イニング進める</button>
+    <p class="desc">試合中のデイゲームのイニングとスコアが進みます</p>
+    <button class="btn" id="demo-fin">🏁 ライブ試合を今すぐ結果確定</button>
+    <p class="desc">ハンデ表で判定し、対象ベットを自動精算します</p>
+    <button class="btn" id="demo-rush">⏱ ナイターの締切を60秒後にする</button>
+    <p class="desc">締切カウントダウン→締切の流れを見せられます</p>
+    <button class="btn" id="demo-newday">🌅 新しい試合日を開始</button>
+    <p class="desc">試合をリセット（未確定ベットは全額返還されます）</p>
+    <button class="btn danger" id="demo-reset">🗑 デモデータを全リセット</button>
+    <p class="desc">残高・履歴・設定を初期状態に戻して再読み込みします</p>
+    <div class="actions"><button class="btn primary" id="demo-close">閉じる</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">完了しました</div>
+
+<script>
+/* ================= 状態（すべてダミーデータ） ================= */
+const now = Date.now();
+const DAY = 86400000;
+let seq = 100;
+
+// 1日の流れ：朝MLB（終了・延長あり）→ 昼NPBデイゲーム（試合中）→ 夜NPBナイター（予想受付中）
+function freshMatches(){
+  const t0 = Date.now();
+  return [
+    // NPB ナイター（予想受付中・締切カウント中）※日本は9回打切
+    {id:1, lg:"NPB", ext:false, away:"巨人", home:"阪神",  hcapSide:"巨人", hcap:"1.3", start:"18:00", deadline: t0+42*60*1000, status:"open", pool:{a:412000,h:236000,bets:184}},
+    {id:2, lg:"NPB", ext:false, away:"広島", home:"中日",  hcapSide:"広島", hcap:"0.7", start:"18:00", deadline: t0+42*60*1000, status:"open", pool:{a:198000,h:224000,bets:121}},
+    {id:4, lg:"NPB", ext:false, away:"ソフトバンク", home:"ロッテ", hcapSide:"ソフトバンク", hcap:"2", start:"18:30", deadline: t0+72*60*1000, status:"open", pool:{a:264000,h:288000,bets:158}},
+    {id:6, lg:"NPB", ext:false, away:"西武", home:"楽天", hcapSide:"楽天", hcap:"1", start:"18:00", deadline: t0+42*60*1000, status:"open", pool:{a:118000,h:167000,bets:84}},
+    // NPB デイゲーム（試合中：速報表示）※9回打切
+    {id:3, lg:"NPB", ext:false, away:"DeNA", home:"ヤクルト", hcapSide:"DeNA", hcap:"1半3", start:"14:00", status:"live", deadline: t0-4*3600*1000, live:{a:3,h:2,inning:"4回表"}, pool:{a:301000,h:145000,bets:132}},
+    {id:5, lg:"NPB", ext:false, away:"日本ハム", home:"オリックス", hcapSide:"日本ハム", hcap:"0.5", start:"13:00", status:"live", deadline: t0-5*3600*1000, live:{a:2,h:4,inning:"6回裏"}, pool:{a:172000,h:189000,bets:97}},
+    // MLB（今朝開催：試合終了・精算済）※メジャーは延長あり
+    {id:7, lg:"MLB", ext:true, away:"ドジャース", home:"パドレス", hcapSide:"ドジャース", hcap:"1半", start:"8:05", deadline: t0-11*3600*1000, status:"final", live:{a:5,h:3,inning:"9回裏"}, pool:{a:96000,h:64000,bets:52}},
+    {id:8, lg:"MLB", ext:true, away:"ヤンキース", home:"レッドソックス", hcapSide:"ヤンキース", hcap:"1.3", start:"8:35", deadline: t0-11*3600*1000, status:"final", live:{a:2,h:4,inning:"9回裏"}, pool:{a:71000,h:69000,bets:44}},
+    {id:9, lg:"MLB", ext:true, away:"カブス", home:"メッツ", hcapSide:"メッツ", hcap:"0.7", start:"9:10", deadline: t0-10*3600*1000, status:"final", live:{a:3,h:4,inning:"延長11回"}, pool:{a:38000,h:55000,bets:29}},
+  ];
+}
+
+const state = {
+  role: "user",
+  page: "home",
+  profile: null,   // ログイン中のアカウント {name, uid, email}（nullなら認証画面）
+  prefs: { defBet:5000, hideBal:false, selfDayCap:0 },            // ユーザー設定（デフォルトベット額・残高非表示・自己規制）
+  ag:    { defBack:0, defMcap:100000, defDcap:300000, autoOk:20000 }, // エージェント設定（新規配下デフォルト・自動承認しきい値）
+  wallets: { user: 128400, agent: 264000, union: 1250000 },
+  feeRate: 10.0,       // 勝ちベットへの手数料%（勝ち＝90%支払い／負け＝全額ユニオン受入）
+  agentBackRate: 20,   // 田中エージェントのレーキバック%（手数料額を100%とした割合・勝ち負け両方に発生）
+  openDrill: null,
+  editUser: null,   // エージェント：編集中の配下ユーザーindex
+  editAgent: null,  // ユニオン：編集中のエージェントindex
+  editMatch: null,  // ユニオン：編集中の試合id
+  periodKey: "7",
+  period: null,
+  memberDetail: null,   // 詳細表示中のメンバー名（ユニオン管理・エージェント・運営）
+  agentDetail: null,    // 詳細表示中のエージェント名（ユニオン・運営）
+  adminUnion: null,     // 運営：詳細表示中のユニオン名
+  detailCtx: null,      // 詳細参照中のユニオン（null＝東京セントラル＝実データ）
+  mPeriodKey: "7",
+  mPeriod: null,
+  // ユニオン設定（X-Pokerのクラブ設定を参考）
+  us: {
+    showPool: true,       // 予想ボリューム（寄り）をユーザーに表示
+    showRanking: true,    // 収支ランキングの公開
+    multiBet: true,       // 同一試合への複数ベット許可
+    betMin: 100,          // 最低ベット
+    capNPB: 1000000,      // NPB: 1試合あたりのベット上限（ユーザー合計）
+    capMLB: 500000,       // MLB: 1試合あたりのベット上限（ユーザー合計）
+    minGames: 1,          // 複数試合縛り（1=制限なし、2=最低2試合、3=最低3試合）
+    autoClose: 10,        // 試合開始n分前に自動締切
+    joinApproval: "manual", // 参加承認
+    ipGuard: true,        // 多重アカウント・不正検知
+    agentDetail: true,    // エージェントに配下詳細の閲覧を許可
+    allowCancel: true,    // 締切前のベット取消を許可
+    weeklySettle: "mon",  // レーキバック精算サイクル
+  },
+  // 運営（プラットフォーム）設定
+  as: {
+    feeCap: 15,           // ユニオン手数料率の上限%（勝ちベットへの手数料）
+    platformCut: 20,      // 運営取り分（ユニオン手数料収入の%）
+    openFee: 500000,      // ユニオン開設料（P）
+    review: "manual",     // 新規ユニオン審査
+    rmtLevel: "中",       // RMT検知感度
+    autoFreeze: true,     // 多重アカウントの自動凍結
+    moveLimit: 1000000,   // ポイント移動の1回あたり上限
+    regOpen: true,        // 新規登録の受付
+    maint: false,         // メンテナンスモード
+  },
+  matches: [],
+  history: [
+    {dt:"8/27 07:50", match:"ドジャース - パドレス", pick:"ドジャース", hcap:"ドジャース 1半", amt:5000, result:"win", pnl:+4500, mid:7},
+    {dt:"8/26 17:41", match:"巨人 - 阪神", pick:"阪神", hcap:"巨人 1半", amt:10000, result:"win",  pnl:+9000},
+    {dt:"8/26 17:38", match:"広島 - 中日", pick:"広島", hcap:"広島 0.5", amt:5000,  result:"lose", pnl:-5000},
+    {dt:"8/25 17:55", match:"DeNA - ヤクルト", pick:"DeNA", hcap:"DeNA 1", amt:8000, result:"win", pnl:+7200},
+    {dt:"8/24 18:02", match:"ソフトバンク - ロッテ", pick:"ロッテ", hcap:"SB 2", amt:12000, result:"lose", pnl:-12000},
+    {dt:"8/23 17:30", match:"西武 - 楽天", pick:"楽天", hcap:"楽天 0.7", amt:6000, result:"win", pnl:+5400},
+    {dt:"8/22 17:48", match:"巨人 - 中日", pick:"巨人", hcap:"巨人 1", amt:10000, result:"win", pnl:+9000},
+  ],
+  dailyPnl: Array.from({length:60},(_,i)=>{
+    const t = new Date(now-(59-i)*DAY); t.setHours(0,0,0,0);
+    const bets = Math.floor(Math.random()*4);
+    let wins = 0, pnl = 0, rake = 0, vol = 0;
+    for(let b=0;b<bets;b++){
+      const amt = (1+Math.floor(Math.random()*10))*1000;
+      vol += amt;
+      if(Math.random()<0.52){ wins++; const fee = Math.round(amt*0.1); pnl += amt-fee; rake += fee; }
+      else { pnl -= amt; }
+    }
+    return {t, pnl, bets, wins, rake, vol};
+  }),
+  // back＝レーキバック%（ベット額×手数料率＝バック原資を100%とした割合）
+  // 例: 手数料10%・バック20% → 1,000Pベットの原資100Pのうち20Pがエージェントへ、80Pがユニオンに
+  // matchCap＝そのエージェント配下の1試合あたりベット上限（ユニオンが設定）
+  agents: [
+    {name:"田中", users:23, vol:875000,  back:20, matchCap:500000},
+    {name:"佐藤", users:18, vol:578000,  back:15, matchCap:300000},
+    {name:"鈴木", users:31, vol:1108000, back:25, matchCap:500000},
+    {name:"高橋", users:12, vol:316000,  back:10, matchCap:200000},
+    {name:"伊藤", users:9,  vol:224000,  back:10, matchCap:200000},
+    {name:"渡辺", users:15, vol:452000,  back:15, matchCap:300000},
+  ],
+  // back＝エージェントが自分のバックからユーザーへ再分配する%（同じく原資100%基準・デフォルト0%）
+  // mcap＝1試合あたり／dcap＝1日あたりのベット上限（エージェントがユーザー別に設定・0=無制限）
+  agentUsers: [
+    {name:"あなた（demo_user）", joined:"6/01", vol:51000,  back:10, mcap:100000, dcap:300000, active:true, self:true},
+    {name:"yuki_09",    joined:"6/12", vol:284000, back:10, mcap:200000, dcap:500000, active:true},
+    {name:"baystars_m", joined:"6/28", vol:196000, back:5,  mcap:100000, dcap:300000, active:true},
+    {name:"carp_dan",   joined:"7/04", vol:152000, back:0,  mcap:100000, dcap:300000, active:true},
+    {name:"tora_kichi", joined:"7/19", vol:98000,  back:0,  mcap:50000,  dcap:150000, active:true},
+    {name:"hawks_fan8", joined:"8/02", vol:61000,  back:0,  mcap:50000,  dcap:100000, active:false},
+    {name:"dra_gons22", joined:"8/15", vol:33000,  back:0,  mcap:50000,  dcap:100000, active:true},
+  ],
+  members: [
+    {name:"あなた（demo_user）", agent:"田中", vol:51000, pnl:+15300, active:true, self:true},
+    {name:"yuki_09",   agent:"田中", vol:284000, pnl:+18400, active:true},
+    {name:"swallow_k", agent:"鈴木", vol:241000, pnl:-9200,  active:true},
+    {name:"baystars_m",agent:"田中", vol:196000, pnl:+4100,  active:true},
+    {name:"lions_taro",agent:"佐藤", vol:173000, pnl:-15600, active:true},
+    {name:"carp_dan",  agent:"田中", vol:152000, pnl:+7800,  active:true},
+    {name:"buffa_king",agent:"鈴木", vol:139000, pnl:+2600,  active:true},
+    {name:"hawks_fan8",agent:"田中", vol:61000,  pnl:-2400,  active:false},
+    {name:"eagle_nori",agent:"佐藤", vol:58000,  pnl:-800,   active:true},
+  ],
+  reqsToAgent: [
+    {id:++seq, dt:"8/27 10:12", from:"yuki_09", amt:20000, note:"今週分の補充をお願いします", status:"pending"},
+    {id:++seq, dt:"8/26 21:04", from:"carp_dan", amt:10000, note:"", status:"approved"},
+  ],
+  reqsToUnion: [
+    {id:++seq, dt:"8/27 09:30", from:"佐藤エージェント", amt:150000, note:"配下ユーザー配布用", status:"pending"},
+    {id:++seq, dt:"8/26 18:20", from:"swallow_k", amt:30000, note:"", status:"approved"},
+  ],
+  transfers: [
+    {dt:"8/26 20:10", actor:"agent", target:"tora_kichi", amt:15000, dir:"send"},
+    {dt:"8/25 12:00", actor:"union", target:"田中エージェント", amt:200000, dir:"send"},
+    {dt:"8/24 22:30", actor:"union", target:"swallow_k", amt:30000, dir:"send"},
+  ],
+  // ポイント購入＝アプリ内課金でアイテムを購入し、ゲーム内でポイントに交換する方式（クレカ直接決済・現金振込なし）
+  itemsCatalog: [
+    {id:"ball",   name:"ボール",     icon:"⚾", jpy:160,   pts:1000},
+    {id:"glove",  name:"グローブ",   icon:"🧤", jpy:800,   pts:5000},
+    {id:"bat",    name:"バット",     icon:"🏏", jpy:1600,  pts:10000},
+    {id:"gbat",   name:"金のバット", icon:"🌟", jpy:16000, pts:100000},
+    {id:"trophy", name:"トロフィー", icon:"🏆", jpy:80000, pts:500000},
+  ],
+  inventory: {ball:2, glove:0, bat:1, gbat:0, trophy:0},
+  iap:  [{dt:"8/25 11:02", union:"東京セントラルユニオン", name:"トロフィー", icon:"🏆", qty:2, jpy:160000}],
+  exch: [{dt:"8/25 11:05", union:"東京セントラルユニオン", name:"トロフィー", icon:"🏆", qty:2, pts:1000000}],
+  payouts: [
+    {p:"8月 第3週", vol:214000, claimed:false},
+    {p:"8月 第2週", vol:187000, claimed:true},
+    {p:"8月 第1週", vol:243000, claimed:true},
+    {p:"7月 第4週", vol:198000, claimed:true},
+  ],
+  publicUnions: [
+    {name:"関西ドラゴンズ会", uid:"771204", members:96, fee:10.0, status:"none"},
+    {name:"九州ホークスクラブ", uid:"350081", members:74, fee:12.0, status:"none", refReq:true},
+    {name:"北海道ファイターズ連合", uid:"118872", members:52, fee:10.0, status:"none"},
+  ],
+  joinRequests: [
+    {id:++seq, name:"shinjo_big", dt:"8/27 08:10", ref:"TANAKA-9", status:"pending"},
+    {id:++seq, name:"uma_lover77", dt:"8/26 23:40", ref:"SUZUKI-1", status:"pending"},
+  ],
+  unions: [
+    {name:"東京セントラルユニオン", owner:"yamamoto", members:128, fee:10.0, vol:"4.2M", status:"active"},
+    {name:"関西ドラゴンズ会",       owner:"kansai_d",  members:96,  fee:10.0, vol:"3.1M", status:"active"},
+    {name:"九州ホークスクラブ",     owner:"kyushu_h",  members:74,  fee:12.0, vol:"2.4M", status:"active"},
+    {name:"北海道ファイターズ連合", owner:"fighters_h",members:52,  fee:10.0, vol:"1.8M", status:"active"},
+    {name:"東北イーグルス会",       owner:"eagle_t",   members:0,   fee:10.0, vol:"—",    status:"review"},
+    {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
+  ],
+  notices: [
+    {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
+    {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
+    {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
+    {d:"8/24", t:"ポイントはゲーム内専用です。サービス外での売買は禁止です（利用規約）"},
+  ],
+  log: [
+    {dt:"8/27 09:12", type:"発行",  body:"東京セントラルユニオンへ 100,000P 発行（月次イベント原資）"},
+    {dt:"8/26 23:00", type:"精算",  body:"日次レーキバック精算 14ユニオン / 支払合計 86,300P"},
+    {dt:"8/26 20:15", type:"警告",  body:"名古屋グランド会：手数料率が上限(15%)に到達"},
+    {dt:"8/26 18:00", type:"締切",  body:"全ユニオン 8/26開催分の受付を自動締切"},
+    {dt:"8/25 11:05", type:"交換",  body:"東京セントラルユニオン：トロフィー×2 を 1,000,000P に交換（アプリ内課金アイテム）"},
+    {dt:"8/25 10:44", type:"審査",  body:"東北イーグルス会の新規申請を受理（審査中）"},
+  ],
+};
+let currentBet = null;
+
+/* ================= ユーティリティ ================= */
+const $ = s => document.querySelector(s);
+const yen = n => n.toLocaleString("ja-JP");
+const sign = n => (n>=0? "+" : "−") + yen(Math.abs(n));
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2400);
+}
+function fmtCd(ms){
+  if(ms <= 0) return "締切済";
+  if(ms >= 3600000){
+    const h = Math.floor(ms/3600000), m = Math.floor(ms%3600000/60000);
+    return `締切まで ${h}時間${m}分`;
+  }
+  const m = Math.floor(ms/60000), s = Math.floor(ms%60000/1000);
+  return `締切まで ${m}:${String(s).padStart(2,"0")}`;
+}
+function nowStr(){
+  const t = new Date();
+  return `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
+}
+function fmtD(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
+function iso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function esc(s){return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const statusPill = s => s==="pending" ? '<span class="pill pend">承認待ち</span>' : s==="approved" ? '<span class="pill win">承認済</span>' : '<span class="pill lose">却下</span>';
+// ハンデのラダー表記（日本式: 0.3/0.5/0.7 → 1 → 1.3… → 1半 → 1半3… → 2 …）
+const LADDER = (()=>{
+  const a = ["0","0.3","0.5","0.7"];
+  for(let n=1;n<=3;n++){ a.push(String(n), n+".3", n+".5", n+".7", n+"半", n+"半3", n+"半5", n+"半7"); }
+  a.push("4");
+  return a;
+})();
+
+/* ================= デモ永続化（localStorage） ================= */
+const SAVE_KEY = "union9-demo-v1";
+const SAVE_FIELDS = ["profile","wallets","feeRate","agentBackRate","agents","agentUsers","members",
+  "history","reqsToAgent","reqsToUnion","transfers","iap","exch","payouts","publicUnions","joinRequests","log","matches"];
+function saveState(){
+  try{
+    const dump = {seq};
+    SAVE_FIELDS.forEach(k=>dump[k]=state[k]);
+    dump.us = state.us; dump.as = state.as; dump.inventory = state.inventory;
+    dump.prefs = state.prefs; dump.ag = state.ag; dump.itemsCatalog = state.itemsCatalog;
+    dump.dailyPnl = state.dailyPnl.map(r=>({...r, t:+r.t}));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(dump));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    SAVE_FIELDS.forEach(k=>{ if(d[k]!==undefined) state[k]=d[k]; });
+    if(d.us) state.us = {...state.us, ...d.us};
+    if(d.as) state.as = {...state.as, ...d.as};
+    if(d.inventory) state.inventory = {...state.inventory, ...d.inventory};
+    if(d.prefs) state.prefs = {...state.prefs, ...d.prefs};
+    if(d.ag) state.ag = {...state.ag, ...d.ag};
+    if(d.itemsCatalog) state.itemsCatalog = d.itemsCatalog;
+    if(d.dailyPnl) state.dailyPnl = d.dailyPnl.map(r=>({...r, t:new Date(r.t)}));
+    if(d.seq) seq = Math.max(seq, d.seq);
+    return true;
+  }catch(e){ return false; }
+}
+function resetDemo(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  location.reload();
+}
+
+/* ================= 集計の単一情報源（全ページ共通・ズレ防止） ================= */
+const TCU = "東京セントラルユニオン";
+const calc = {
+  unionVol:     ()=> state.agents.reduce((a,g)=>a+g.vol,0),                              // 今月ベット総額（TCU）
+  unionGross:   ()=> Math.round(calc.unionVol()*state.feeRate/200),                      // 想定粗利（勝敗五分）
+  agentPay:     ()=> state.agents.reduce((a,g)=>a+Math.round(g.vol*state.feeRate/100*g.back/100),0),
+  unionMembers: ()=> state.members.length,
+  unionAgents:  ()=> state.agents.length,
+  unionVolOf:   (name)=> name===TCU ? calc.unionVol() : unionData(name).agents.reduce((a,g)=>a+g.vol,0),
+  membersOf:    (u)=> u.name===TCU ? state.members.length : (u.members||0),
+  activeUnions: ()=> state.unions.filter(u=>u.status==="active").length,
+  reviewUnions: ()=> state.unions.filter(u=>u.status==="review").length,
+  platformUsers:()=> state.unions.reduce((a,u)=>a+calc.membersOf(u),0),
+  platformAgents:()=> state.unions.filter(u=>u.status==="active").reduce((a,u)=> a + (u.name===TCU? state.agents.length : unionData(u.name).agents.length), 0),
+  platformVol:  ()=> state.unions.filter(u=>u.status==="active").reduce((a,u)=>a+calc.unionVolOf(u.name),0),
+  platformCutP: ()=> Math.round(state.unions.filter(u=>u.status==="active").reduce((a,u)=>a+calc.unionVolOf(u.name)*u.fee/200,0)*state.as.platformCut/100),
+};
+const fmtM = v => v>=1000000 ? (v/1000000).toFixed(1)+"M" : yen(v);
+/* デモ本人の静的数値を実データ（日別収支）から導出して全ページ一致させる */
+function syncDerived(){
+  const last30 = state.dailyPnl.slice(-30);
+  const vol30 = last30.reduce((a,r)=>a+(r.vol||0),0);
+  const pnl30 = last30.reduce((a,r)=>a+r.pnl,0);
+  const sa = state.agentUsers.find(u=>u.self);
+  sa.vol = vol30;
+  const sm = state.members.find(u=>u.self);
+  sm.vol = vol30; sm.pnl = pnl30;
+  const t = state.agents.find(g=>g.name==="田中");
+  t.vol = state.agentUsers.reduce((a,u)=>a+u.vol,0);   // 田中の配下ベット総額＝配下の合計
+  t.users = state.agentUsers.length;
+}
+const card = (l,v,sub="",cls="") => `<div class="stat"><div class="l">${l}</div><div class="v ${cls}">${v}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`;
+
+/* ================= ナビゲーション ================= */
+const ICONS = {
+  home:'<svg viewBox="0 0 20 20"><path d="M3 10 L10 3 L17 10 M5 8.5 V17 H15 V8.5 M8.5 17 V12 H11.5 V17"/></svg>',
+  union:'<svg viewBox="0 0 20 20"><path d="M10 2 L17 4.8 V9.5 C17 14 14.2 16.8 10 18 C5.8 16.8 3 14 3 9.5 V4.8 Z"/><path d="M7 9.8 L9.2 12 L13.4 7.6"/></svg>',
+  bet:'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="M5.3 5.5 C7 7.5 7 12.5 5.3 14.5 M14.7 5.5 C13 7.5 13 12.5 14.7 14.5"/></svg>',
+  members:'<svg viewBox="0 0 20 20"><circle cx="7.2" cy="7" r="2.8"/><path d="M2.5 16.5 C2.5 13.4 4.6 11.6 7.2 11.6 C9.8 11.6 11.9 13.4 11.9 16.5"/><circle cx="14" cy="7.6" r="2.2"/><path d="M13.4 11.9 C15.8 12 17.5 13.7 17.5 16.5"/></svg>',
+  cashier:'<svg viewBox="0 0 20 20"><rect x="2.5" y="5" width="15" height="11" rx="2"/><path d="M2.5 8.5 H17.5 M13 12.5 H15"/></svg>',
+  data:'<svg viewBox="0 0 20 20"><path d="M4 16.5 V10 M10 16.5 V4.5 M16 16.5 V8"/><path d="M2.5 18 H17.5"/></svg>',
+  settings:'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.8 V5 M10 15 V17.2 M2.8 10 H5 M15 10 H17.2 M4.9 4.9 L6.5 6.5 M13.5 13.5 L15.1 15.1 M15.1 4.9 L13.5 6.5 M6.5 13.5 L4.9 15.1"/></svg>',
+};
+const PAGES = [
+  {key:"home",     label:"ホーム",       short:"ホーム"},
+  {key:"bet",      label:"ベット",       short:"ベット"},
+  {key:"members",  label:"メンバー",     short:"メンバー"},
+  {key:"cashier",  label:"キャッシャー", short:"キャッシャー"},
+  {key:"data",     label:"データ",       short:"データ"},
+  {key:"settings", label:"設定",         short:"設定"},
+];
+function navBadge(key){
+  if(key==="cashier"){
+    if(state.role==="agent") return state.reqsToAgent.filter(r=>r.status==="pending").length;
+    if(state.role==="union") return state.reqsToUnion.filter(r=>r.status==="pending").length;
+    if(state.role==="admin") return 0;
+  }
+  if(key==="members" && state.role==="union") return state.joinRequests.filter(r=>r.status==="pending").length;
+  return 0;
+}
+function renderNav(){
+  $("#nav").innerHTML = PAGES.map(p=>{
+    const b = navBadge(p.key);
+    return `<button data-page="${p.key}" class="${state.page===p.key?"on":""}">${ICONS[p.key]}<span class="nl-f">${p.label}</span><span class="nl-s">${p.short}</span>${b?`<span class="badge">${b}</span>`:""}</button>`;
+  }).join("");
+}
+function go(page){
+  state.page = page;
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
+  $("#page-"+page).classList.add("on");
+  renderPage();
+  window.scrollTo(0,0);
+}
+function setRole(r){
+  state.role = r;
+  state.memberDetail = null;
+  state.agentDetail = null;
+  state.adminUnion = null;
+  state.detailCtx = null;
+  state.editUser = null;
+  state.editAgent = null;
+  state.editMatch = null;
+  document.querySelectorAll("#roleswitch button").forEach(b=>b.classList.toggle("on", b.dataset.role===r));
+  renderPage();
+}
+
+/* ================= 予想プール共通 ================= */
+function poolHTML(m){
+  const tot = m.pool.a + m.pool.h;
+  const pa = Math.round(m.pool.a/tot*100);
+  return `<div class="pbar"><i style="width:${pa}%"></i></div>
+    <div class="pmeta"><span><b>${esc(m.away)}</b> ${pa}%・${yen(m.pool.a)}P</span><span><b>${esc(m.home)}</b> ${100-pa}%・${yen(m.pool.h)}P</span></div>`;
+}
+function updatePools(){
+  state.matches.forEach(m=>{
+    document.querySelectorAll(`[data-pool="${m.id}"]`).forEach(el=> el.innerHTML = poolHTML(m));
+    document.querySelectorAll(`[data-ptotal="${m.id}"]`).forEach(el=> el.textContent = yen(m.pool.a+m.pool.h)+"P");
+    document.querySelectorAll(`[data-pbets="${m.id}"]`).forEach(el=> el.textContent = m.pool.bets+"件");
+  });
+  const totalAll = state.matches.reduce((a,m)=>a+m.pool.a+m.pool.h,0);
+  document.querySelectorAll("[data-pool-all]").forEach(el=> el.innerHTML = yen(totalAll)+"<small>P</small>");
+}
+setInterval(()=>{
+  state.matches.forEach(m=>{
+    if(m.status==="open" && m.deadline>Date.now() && Math.random()<0.75){
+      const side = Math.random() < m.pool.a/(m.pool.a+m.pool.h) ? "a" : "h";
+      m.pool[side] += (1+Math.floor(Math.random()*8))*500;
+      if(Math.random()<0.5) m.pool.bets++;
+    }
+  });
+  updatePools();
+}, 2000);
+setInterval(()=>{
+  document.querySelectorAll("[data-cd]").forEach(el=>{
+    const m = state.matches.find(x=>x.id==el.dataset.cd);
+    if(!m) return;
+    const closed = m.status==="closed" || m.deadline<=Date.now();
+    el.textContent = closed? "締切済" : fmtCd(m.deadline-Date.now());
+    el.classList.toggle("over", closed);
+    const card2 = el.closest(".match");
+    if(card2) card2.querySelectorAll("[data-bet]").forEach(b=>b.disabled=closed);
+  });
+}, 1000);
+
+/* ================= レーキ配分 ================= */
+function rakeSplit(){
+  // バック原資＝ベット額×手数料率（勝ち負け両方に発生）。バック率はこの原資を100%とした割合
+  const totVol = state.agentUsers.reduce((a,u)=>a+u.vol,0);
+  const base = totVol*state.feeRate/100;                                           // バック原資合計
+  const agentGross = base*state.agentBackRate/100;                                 // エージェント受取総額
+  const userPay = state.agentUsers.reduce((a,u)=>a+u.vol*state.feeRate/100*u.back/100,0); // うちユーザーへ再分配
+  const avgUserBack = base? userPay/base*100 : 0;                                  // ユーザーバックの加重平均%
+  return {totVol, base, agentGross, userPay, agentNet: Math.max(agentGross-userPay,0), avgUserBack};
+}
+function flowHTML(){
+  const s2 = rakeSplit();
+  const agent = state.agentBackRate;                 // 手数料額を100%としたエージェントバック%
+  const user = Math.min(s2.avgUserBack, agent);      // うちユーザー還元%
+  const agentNet = agent - user;
+  const union = Math.max(100 - agent, 0);
+  const fee = Math.round(1000*state.feeRate/100);    // 1,000Pベットの手数料（例:100P）
+  return `<div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700">1,000Pベットの手数料 ${yen(fee)}P（${state.feeRate.toFixed(0)}%）を100%とした配分</div>
+  <div class="flowbar">
+    <div class="f3" style="flex:${Math.max(union,1)}">ユニオン ${union.toFixed(0)}%</div>
+    <div class="f2" style="flex:${Math.max(agentNet,1)}">エージェント ${agentNet.toFixed(0)}%</div>
+    <div class="f1" style="flex:${Math.max(user,1)}">ユーザー ${user.toFixed(0)}%</div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--surface2);border:1px solid var(--line)"></i>ユニオン ${yen(Math.round(fee*union/100))}P</span>
+    <span><i style="background:var(--amber)"></i>エージェント純取り分 ${yen(Math.round(fee*agentNet/100))}P</span>
+    <span><i style="background:var(--green-deep)"></i>ユーザー還元 ${yen(Math.round(fee*user/100))}P</span>
+  </div>
+  <p class="hint" style="margin-top:6px">例（1,000Pベット・手数料10%・バック${agent.toFixed(0)}%）— 勝ち: ユーザー+${yen(1000-fee)}P／手数料${yen(fee)}Pを上記配分。負け: ユーザー−1,000P／ユニオン+${yen(1000-Math.round(fee*agent/100))}P／エージェント+${yen(Math.round(fee*agent/100))}P。バックは勝ち負け関係なく発生します。</p>`;
+}
+
+/* ================= 試合速報・結果確定（ハンデ表準拠） ================= */
+// ハンデ表記の解釈: "1"=整数, "1.3"=分けあり, "1半"=明確ライン, "1半3"=半＋分け
+function parseHande(hs){
+  hs = String(hs);
+  let mm;
+  if(mm = hs.match(/^(\d+)半([357])?$/)) return {n:+mm[1], han:true,  f:mm[2]?+mm[2]:0};
+  if(mm = hs.match(/^(\d+)\.([357])$/)) return {n:+mm[1], han:false, f:+mm[2]};
+  if(mm = hs.match(/^(\d+)$/))           return {n:+mm[1], han:false, f:0};
+  return {n:0, han:false, f:0};
+}
+// 出しチーム（ハンデを出す側）の得点差 margin に対する結果
+// 戻り値: +10=丸勝ち／+k=k分勝ち／0=勝負無し／−k=k分負け／−10=丸負け（ハンデ表のとおり）
+function handeOutcome(hs, margin){
+  const {n, han, f} = parseHande(hs);
+  if(han){                                  // n半 / n半f
+    if(margin <= n) return -10;             // 丸負け
+    if(f && margin === n+1) return 10-f;    // 1半3で2点差→7分勝ち など
+    return 10;                              // 丸勝ち
+  }
+  if(f === 0){                              // 整数ハンデ
+    if(margin < n) return -10;
+    if(margin === n) return 0;              // 勝負無し
+    return 10;
+  }
+  if(n === 0){                              // 0.3/0.5/0.7: 引き分けと1点差の両方が分け
+    if(margin < 0) return -10;
+    if(margin === 0) return -f;             // 引き分け→f分負け
+    if(margin === 1) return 10-f;           // 1点差勝ち→(10−f)分勝ち
+    return 10;
+  }
+  if(margin < n) return -10;                // n.f（n≧1）
+  if(margin === n) return -f;               // n点差勝ち→f分負け
+  return 10;                                // それ以上→丸勝ち
+}
+function fracLabel(k){
+  if(k === 0) return "勝負無し";
+  const a = Math.abs(k);
+  return (a===10? "丸" : a+"分") + (k>0? "勝ち" : "負け");
+}
+function matchMargin(m){ return m.hcapSide===m.away ? m.live.a-m.live.h : m.live.h-m.live.a; }
+function liveJudge(m){
+  const out = handeOutcome(m.hcap, matchMargin(m));
+  const dog = m.hcapSide===m.away ? m.home : m.away;
+  const fin = m.status==="final";
+  if(out===0) return fin? "勝負無し（全額返還）" : "勝負無し圏";
+  const side = out>0? m.hcapSide : dog;
+  return `${side} ${fracLabel(Math.abs(out))}${fin?"":"ペース"}`;
+}
+/* 結果確定 → ハンデ表判定 → 自動精算（丸=100%・分=割合・勝負無し=返還） */
+function finalize(m){
+  if(m.status!=="live") return;
+  m.status = "final";
+  const out = handeOutcome(m.hcap, matchMargin(m));
+  m.result = {out};
+  const key = `${m.away} - ${m.home}`;
+  let feeSum = 0, loseSum = 0, myDelta = 0, myBets = 0;
+  state.history.forEach(h=>{
+    if(h.result!=="pending" || h.match!==key) return;
+    myBets++;
+    h.mid = m.id;
+    const fr = (h.pick===m.hcapSide) ? out : -out;  // 出し側の逆にベットした場合は鏡写し
+    h.frac = fr;
+    if(fr===0){
+      h.result = "push"; h.pnl = 0;
+      state.wallets.user += h.amt;                  // 勝負無し：全額返還
+    } else if(fr>0){
+      const winAmt = Math.round(h.amt*fr/10);       // 丸勝ち=100%／k分勝ち=k×10%
+      const fee = Math.round(winAmt*state.feeRate/100);
+      h.result = "win"; h.pnl = winAmt - fee;
+      state.wallets.user += h.amt + winAmt - fee;   // 元本＋勝ち分（手数料差引）
+      feeSum += fee;
+      myDelta += h.pnl;
+    } else {
+      const loseAmt = Math.round(h.amt*(-fr)/10);   // 丸負け=100%／k分負け=k×10%
+      h.result = "lose"; h.pnl = -loseAmt;
+      state.wallets.user += h.amt - loseAmt;        // 分負けは残りを返還
+      loseSum += loseAmt;
+      myDelta -= loseAmt;
+    }
+  });
+  state.wallets.union += feeSum + loseSum;
+  const resText = liveJudge(m);
+  state.log.unshift({dt:nowStr(), type:"精算",
+    body:`${key} 結果確定 ${m.live.a}-${m.live.h}／出し ${m.hcapSide} ${m.hcap}・${resText}。自動精算（勝ち手数料 ${yen(feeSum)}P・負け受入 ${yen(loseSum)}P。レーキバックは週次精算で支払）`});
+  rerender();
+  if(myBets>0){
+    toast(out===0? `${key} は勝負無し。ベットを全額返還しました`
+      : `${key} 結果確定：${resText}。あなたの精算 ${sign(myDelta)}P`);
+  } else {
+    toast(`${key} の結果が確定しました（${resText}）`);
+  }
+}
+function finLabel(m){
+  return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
+}
+function liveCards(league){
+  const lives = state.matches.filter(m=>(m.status==="live" || m.status==="final") && (!league || m.lg===league));
+  if(!lives.length) return '<div class="panel empty">対象の試合はありません</div>';
+  const key = m => `${m.away} - ${m.home}`;
+  return `<div class="matches">${lives.map(m=>{
+    const fin = m.status==="final";
+    const myBets = state.history.filter(h=> h.mid===m.id || (h.result==="pending" && h.match===key(m)));
+    const myBet = myBets[0];
+    let myLine = "";
+    if(myBet){
+      if(!fin || myBet.result==="pending"){
+        myLine = `あなたのベット：<b>${esc(myBet.pick)}</b> ${yen(myBet.amt)}P（結果待ち）`;
+      } else {
+        const total = myBets.reduce((a,h)=>a+h.pnl,0);
+        const fl = myBet.frac!==undefined && Math.abs(myBet.frac)!==10 ? `（${fracLabel(myBet.frac)}）` : "";
+        myLine = myBet.result==="push"
+          ? `あなたのベット：<b>${esc(myBet.pick)}</b> ${yen(myBet.amt)}P → <b>勝負無し・返還</b>`
+          : `あなたのベット：<b>${esc(myBet.pick)}</b> ${yen(myBet.amt)}P → <b class="${total>=0?"pos":"neg"}">${total>=0?"的中":"不的中"}${fl} ${sign(total)}P</b>`;
+      }
+    }
+    return `
+    <div class="match">
+      <div class="meta">
+        ${fin? '<span class="pill closed">試合終了</span>' : '<span class="livepill">LIVE</span>'}
+        <span>${m.lg} ${m.start} 開始・${m.ext?"延長あり":"9回打切"}</span>
+        <span class="inning" data-linning="${m.id}">${fin? finLabel(m) : m.live.inning}</span>
+      </div>
+      <div class="scorebox">
+        <span class="s-team">${esc(m.away)}</span>
+        <span class="s-score" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span class="s-team">${esc(m.home)}</span>
+      </div>
+      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>・${fin?"結果":"ハンデ判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b>${fin?"・精算済":""}</div>
+      ${myLine? `<div class="mybet">${myLine}</div>`:""}
+      ${state.us.showPool? `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`:""}
+    </div>`;
+  }).join("")}</div>`;
+}
+function liveTable(withAction){
+  const lives = state.matches.filter(m=>m.status==="live" || m.status==="final");
+  if(!lives.length) return '<div class="panel empty">現在試合中のゲームはありません</div>';
+  return `<div class="panel tblwrap"><table>
+    <thead><tr><th>試合</th><th>スコア</th><th>イニング</th><th>ハンデ</th><th>判定</th><th>最終プール</th>${withAction?"<th>操作</th>":""}</tr></thead>
+    <tbody>${lives.map(m=>{
+      const fin = m.status==="final";
+      return `
+      <tr><td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
+      <td class="num" style="font-size:16px;font-weight:700" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</td>
+      <td class="amb num" data-linning="${m.id}">${fin? finLabel(m) : m.live.inning}</td>
+      <td class="amb">${esc(m.hcapSide)} ${m.hcap}</td>
+      <td data-ljudge="${m.id}">${liveJudge(m)}</td>
+      <td class="num" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
+      ${withAction? `<td>${fin? '<span class="pill win">精算済</span>' : `<button class="btn small primary" data-final="${m.id}">結果確定</button>`}</td>`:""}</tr>`;
+    }).join("")}</tbody>
+  </table>${withAction? '<p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ判定→対象ベットの自動精算（的中者へ配当・手数料徴収・返還）を実行します。9回裏終了時は自動確定。</p>':""}</div>`;
+}
+function updateLive(){
+  state.matches.forEach(m=>{
+    if(m.status!=="live" && m.status!=="final") return;
+    document.querySelectorAll(`[data-lscore="${m.id}"]`).forEach(el=>el.textContent=`${m.live.a} - ${m.live.h}`);
+    document.querySelectorAll(`[data-linning="${m.id}"]`).forEach(el=>el.textContent = m.status==="final"? finLabel(m) : m.live.inning);
+    document.querySelectorAll(`[data-ljudge="${m.id}"]`).forEach(el=>el.textContent=liveJudge(m));
+  });
+}
+const INNINGS = ["1回表","1回裏","2回表","2回裏","3回表","3回裏","4回表","4回裏","5回表","5回裏","6回表","6回裏","7回表","7回裏","8回表","8回裏","9回表","9回裏"];
+setInterval(()=>{
+  state.matches.forEach(m=>{
+    if(m.status!=="live") return;
+    if(Math.random()<0.18) m.live[Math.random()<0.5?"a":"h"]++;
+    if(m.live.inning==="9回裏"){
+      // 9回裏：延長なし or 素点に差があれば試合終了 → 自動精算
+      m._n9 = (m._n9||0)+1;
+      const tied = m.live.a===m.live.h;
+      if((!tied || !m.ext) && (m._n9>=3 || Math.random()<0.35)){ finalize(m); return; }
+      if(tied && m.ext) m.live.inning = "延長10回";
+    } else if(m.live.inning.startsWith("延長")){
+      if(m.live.a!==m.live.h && Math.random()<0.5){ finalize(m); return; }
+    } else if(Math.random()<0.12){
+      const i = INNINGS.indexOf(m.live.inning);
+      if(i>=0 && i<INNINGS.length-1) m.live.inning = INNINGS[i+1];
+    }
+  });
+  updateLive();
+}, 6000);
+
+/* ================= 部品：試合カード等 ================= */
+function matchCards(interactive, league){
+  return `<div class="matches">${state.matches.filter(m=>m.status!=="live" && (!league || m.lg===league)).map(m=>{
+    const closed = m.status==="closed" || m.deadline <= Date.now();
+    const mb = state.history.filter(h=>h.result==="pending" && h.match===`${m.away} - ${m.home}`);
+    return `
+    <div class="match ${mb.length?"betting":""}">
+      <div class="meta">
+        <span>${m.lg} ${m.start} 開始・${m.ext?"延長あり":"9回打切"}</span>
+        <span class="cd ${closed?"over":""}" data-cd="${m.id}">${closed?"締切済":fmtCd(m.deadline-Date.now())}</span>
+      </div>
+      <div class="teams"><span class="team">${esc(m.away)}</span><span class="vs">VS</span><span class="team">${esc(m.home)}</span></div>
+      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>（出し：${esc(m.hcapSide)}・<a href="#" class="link open-hande">ハンデ表</a>）</div>
+      ${mb.length? `<div class="mybet" style="border-color:var(--green-deep)">🎯 ベット中：${mb.map(b=>`<b>${esc(b.pick)}</b> ${yen(b.amt)}P`).join(" ／ ")}${state.us.allowCancel && !closed? ` <button class="btn small danger" data-cancelbet="${m.id}" style="margin-left:6px">取消</button>`:""}</div>`:""}
+      ${state.us.showPool? `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`
+        : '<div style="font-size:10.5px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:6px;padding:3px">予想の寄りは非公開です（ユニオン設定）</div>'}
+      ${interactive?`<div class="betrow">
+        <button class="betbtn" ${closed?"disabled":""} data-bet="${m.id}" data-pick="${esc(m.away)}">
+          ${esc(m.away)}に賭ける<small>${m.hcapSide===m.away? "出し "+m.hcap+" を背負う":"ハンデ "+m.hcap+" をもらう"}</small>
+        </button>
+        <button class="betbtn" ${closed?"disabled":""} data-bet="${m.id}" data-pick="${esc(m.home)}">
+          ${esc(m.home)}に賭ける<small>${m.hcapSide===m.home? "出し "+m.hcap+" を背負う":"ハンデ "+m.hcap+" をもらう"}</small>
+        </button>
+      </div>`:""}
+    </div>`;
+  }).join("")}</div>`;
+}
+function poolTable(){
+  return `<div class="panel tblwrap"><table>
+    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
+    <tbody>${state.matches.map(m=>{
+      const closed = m.status==="closed" || m.deadline<=Date.now();
+      return `<tr>
+        <td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
+        <td class="num amb" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
+        <td><div class="pool" style="min-width:220px" data-pool="${m.id}">${poolHTML(m)}</div></td>
+        <td class="num hide-m" data-pbets="${m.id}">${m.pool.bets}件</td>
+        <td>${m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}</td>
+      </tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+function hcapTable(){
+  // 受付中の試合リスト（タップで編集ページへ）
+  const list = state.matches.filter(m=>m.status!=="live" && m.status!=="final");
+  return `<div class="uni-list">${list.map(m=>{
+    const closed = m.status==="closed" || m.deadline<=Date.now();
+    const dl = new Date(m.deadline);
+    const hm = `${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
+    return `
+    <div class="uni-card click" data-ematch="${m.id}">
+      <div class="ava" style="font-size:11px;font-weight:900">${m.lg}</div>
+      <div class="info">
+        <div class="nm">${esc(m.away)} - ${esc(m.home)} <span style="color:var(--muted);font-weight:400;font-size:11px">${m.start}</span></div>
+        <div class="meta2">出し <b class="amb">${esc(m.hcapSide)} ${m.hcap}</b>・${m.ext?"延長あり":"9回打切"}・締切 ${hm}</div>
+      </div>
+      ${closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}
+      <span class="arrow">→</span>
+    </div>`;
+  }).join("")}</div>
+  <p class="hint">タップでハンデ・延長・締切を編集（<a href="#" class="link open-hande">ハンデ表を見る</a>）。変更は即座に全ユーザーへ反映されます。</p>`;
+}
+/* 試合の編集ページ（ユニオン管理） */
+function matchEditHTML(){
+  const m = state.matches.find(x=>x.id===state.editMatch);
+  if(!m) return "";
+  const closed = m.status==="closed" || m.deadline<=Date.now();
+  const dl = new Date(m.deadline);
+  const hm = `${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
+  return `
+    <h2 class="sec"><button class="btn small" data-emback>← 試合一覧</button> 試合の設定</h2>
+    <div class="panel">
+      <div class="meta" style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span><span class="pill">${m.lg}</span> ${m.start} 開始</span>
+        ${closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}
+      </div>
+      <div class="teams" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+        <span class="team" style="font-size:17px;font-weight:900">${esc(m.away)}</span>
+        <span class="vs" style="color:var(--muted)">VS</span>
+        <span class="team" style="font-size:17px;font-weight:900">${esc(m.home)}</span>
+      </div>
+      ${state.us.showPool? `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`:""}
+    </div>
+    <h2 class="sec">ハンデ・締切の設定</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">ハンデを出すチーム</div><div class="desc">強い側（ハンデを背負う側）を選択</div></div>
+        <select class="end" data-hside="${m.id}">
+          <option ${m.hcapSide===m.away?"selected":""}>${esc(m.away)}</option>
+          <option ${m.hcapSide===m.home?"selected":""}>${esc(m.home)}</option>
+        </select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ハンデ</div><div class="desc">日本式ラダー表記（<a href="#" class="link open-hande">ハンデ表</a>）</div></div>
+        <select class="end" data-hcap="${m.id}">${LADDER.map(o=>`<option ${m.hcap===o?"selected":""}>${o}</option>`).join("")}</select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">延長</div><div class="desc">判定ルールとしてユーザーのベット画面に表示されます</div></div>
+        <select class="end" data-ext="${m.id}">
+          <option value="1" ${m.ext?"selected":""}>延長あり</option>
+          <option value="0" ${!m.ext?"selected":""}>9回打切</option>
+        </select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">締切時刻</div><div class="desc">現在 ${hm}</div></div>
+        <input type="time" class="end" value="${hm}" data-dl="${m.id}" ${closed?"disabled":""}>
+      </div>
+      <div class="setrow">
+        <div><div class="t">受付の手動操作</div></div>
+        ${closed?`<button class="btn small primary end" data-reopen="${m.id}">受付を再開（締切30分後）</button>`
+               :`<button class="btn small danger end" data-close="${m.id}">今すぐ締め切る</button>`}
+      </div>
+    </div>
+    <p class="hint">変更は自動保存され、即座に全ユーザーのベット画面へ反映されます。</p>`;
+}
+/* 配下ユーザーの編集ページ（エージェント） */
+function editUserHTML(){
+  const i = state.editUser, u = state.agentUsers[i];
+  if(!u) return "";
+  const base = u.vol*state.feeRate/100;
+  return `
+    <h2 class="sec"><button class="btn small" data-euback>← 配下ユーザー一覧</button> 配下ユーザーの設定</h2>
+    <div class="panel profile">
+      <div class="pava">${esc(u.name.charAt(0)).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:900">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""} ${u.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}</div>
+        <div style="font-size:12px;color:var(--muted)">登録 ${u.joined}・今月ベット ${yen(u.vol)}P</div>
+      </div>
+      <button class="btn small" data-mdetail="${esc(u.name)}">収支詳細 →</button>
+    </div>
+    <div class="cards" style="margin-top:14px">
+      ${card("バック原資（今月）", yen(Math.round(base))+"<small>P</small>", "ベット額×手数料率")}
+      ${card("ユーザーへ還元", yen(Math.round(base*u.back/100))+"<small>P</small>", `バック率 ${u.back}%`, "pos")}
+      ${card("あなたの取り分", yen(Math.max(Math.round(base*(state.agentBackRate-u.back)/100),0))+"<small>P</small>", "", "amb")}
+    </div>
+    <h2 class="sec">レーキバック・上限の設定</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">バック率</div><div class="desc">手数料額の%・上限 ${state.agentBackRate}%（あなたの取り分から還元）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" class="w60" min="0" max="${state.agentBackRate}" step="5" value="${u.back}" data-uback="${i}">%</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ベット上限／1試合</div><div class="desc">0=無制限。ユニオンのリーグ上限・エージェント上限との低い方が適用</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="10000" value="${u.mcap||0}" data-umcap="${i}">P</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ベット上限／1日</div><div class="desc">0=無制限</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="10000" value="${u.dcap||0}" data-udcap="${i}">P</span>
+      </div>
+    </div>
+    <p class="hint">変更は自動保存され、即座に本人のベット画面へ反映されます。</p>`;
+}
+/* エージェントの編集ページ（ユニオン管理） */
+function editAgentHTML(){
+  const i = state.editAgent, g = state.agents[i];
+  if(!g) return "";
+  const members = state.members.filter(u=>u.agent===g.name);
+  return `
+    <h2 class="sec"><button class="btn small" data-egback>← エージェント一覧</button> エージェントの設定</h2>
+    <div class="panel profile">
+      <div class="pava">${esc(g.name.charAt(0))}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:900">${esc(g.name)}エージェント</div>
+        <div style="font-size:12px;color:var(--muted)">紹介コード <b class="amb">${AGENT_CODES[g.name]||"—"}</b>・配下 ${g.users}名・今月ベット総額 ${yen(g.vol)}P</div>
+      </div>
+      <button class="btn small" data-adetail="${esc(g.name)}">実績詳細 →</button>
+    </div>
+    <div class="cards" style="margin-top:14px">
+      ${card("レーキバック支払（今月）", yen(Math.round(g.vol*state.feeRate/100*g.back/100))+"<small>P</small>", `手数料額の${g.back}%`, "amb")}
+      ${card("配下ベット総額（今月）", yen(g.vol)+"<small>P</small>", "勝ち負け両方がバック対象")}
+    </div>
+    <h2 class="sec">バック率・上限の設定</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">レーキバック率</div><div class="desc">手数料額を100%とした割合（勝ち負け関係なく発生）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" class="w60" min="0" max="100" step="5" value="${g.back}" data-back="${i}">%</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">配下の1試合あたりベット上限</div><div class="desc">0=無制限。リーグ別上限・ユーザー別上限との低い方が適用</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="50000" value="${g.matchCap||0}" data-acap="${i}">P</span>
+      </div>
+    </div>
+    <h2 class="sec">配下メンバー（${members.length}名） — タップで収支詳細</h2>
+    <div class="uni-list">${members.length? members.map(u=>`
+      <div class="uni-card click" data-mdetail="${esc(u.name)}">
+        <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
+        <div class="info">
+          <div class="nm">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""}</div>
+          <div class="meta2">今月ベット ${yen(u.vol)}P ${u.active?"":"・休眠"}</div>
+        </div>
+        <span class="num ${u.pnl>=0?"pos":"neg"}" style="font-size:13px">${sign(u.pnl)}P</span>
+        <span class="arrow">→</span>
+      </div>`).join("") : '<div class="panel empty">このデモでは配下メンバーのダミーデータがありません</div>'}
+    </div>
+    <p class="hint">例: 手数料10%・バック${g.back}% → 1,000P勝ちベットで手数料100Pのうちエージェント${Math.round(100*g.back/100)}P・ユニオン${100-Math.round(100*g.back/100)}P。負けベットでもユニオン受入から同額をバック。</p>`;
+}
+
+function dummyBets(name){
+  const teams = [["巨人","阪神"],["広島","中日"],["DeNA","ヤクルト"],["ソフトバンク","ロッテ"],["西武","楽天"]];
+  let h = 0; for(const c of name) h = (h*31 + c.charCodeAt(0)) % 997;
+  return Array.from({length:3},(_,i)=>{
+    const t = teams[(h+i)%5], pick = t[(h+i)%2], amt = ((h%8)+2+i)*1000;
+    const win = (h+i)%3 !== 0;
+    return {dt:`8/${24+i}`, match:`${t[0]} - ${t[1]}`, pick, amt, win, pnl: win? Math.round(amt*0.9) : -amt};
+  });
+}
+
+/* ================= メンバー詳細（ユニオン管理） ================= */
+const memberDataCache = {};
+function hashStr(s){ let h=1779033703; for(const c of s){ h=Math.imul(h^c.charCodeAt(0),3432918353); h=(h<<13)|(h>>>19); } return h>>>0; }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function memberData(name){
+  if(name && name.startsWith("あなた")){
+    // デモ本人＝ユーザー自身の実データをそのまま参照（キャッシュせず常に同期）
+    return {
+      daily: state.dailyPnl,
+      games: state.history.filter(h=>h.result!=="pending").slice(0,10)
+        .map(h=>({dt:h.dt.split(" ")[0], match:h.match, pick:h.pick, hcap:h.hcap, amt:h.amt, win:h.pnl>0, pnl:h.pnl})),
+      moves: state.transfers.filter(t=>t.target.startsWith("あなた"))
+        .map(t=>({dt:t.dt, type:t.dir==="send"?"受取":"回収", amt:t.dir==="send"?+t.amt:-t.amt, other:t.actor==="agent"?"田中エージェント":"ユニオン"})),
+      joined: "6/01",
+      ref: {code:"TANAKA-9", by:"田中エージェント"},
+    };
+  }
+  if(memberDataCache[name]) return memberDataCache[name];
+  const rnd = mulberry32(hashStr(name));
+  // 60日分の日別収支（メンバーごとに固有・再現性あり）
+  const daily = Array.from({length:60},(_,i)=>{
+    const t = new Date(now-(59-i)*DAY); t.setHours(0,0,0,0);
+    const bets = Math.floor(rnd()*4);
+    let wins = 0, pnl = 0, rake = 0, vol = 0;
+    for(let b=0;b<bets;b++){
+      const amt = (1+Math.floor(rnd()*10))*1000;
+      vol += amt;
+      if(rnd()<0.52){ wins++; const fee = Math.round(amt*0.1); pnl += amt-fee; rake += fee; }
+      else { pnl -= amt; }
+    }
+    return {t, pnl, bets, wins, rake, vol};
+  });
+  // ゲーム履歴
+  const teams = [["巨人","阪神"],["広島","中日"],["DeNA","ヤクルト"],["ソフトバンク","ロッテ"],["西武","楽天"],["日本ハム","オリックス"]];
+  const games = Array.from({length:10},(_,i)=>{
+    const t = teams[Math.floor(rnd()*6)];
+    const pick = t[rnd()<0.5?0:1];
+    const hs = t[rnd()<0.5?0:1];
+    const h = LADDER[2+Math.floor(rnd()*14)];
+    const amt = (1+Math.floor(rnd()*12))*1000;
+    const win = rnd()<0.5;
+    const d = new Date(now - Math.floor(i*1.6+1)*DAY);
+    return {dt:fmtD(d), match:`${t[0]} - ${t[1]}`, pick, hcap:`${hs} ${h}`, amt, win, pnl: win? Math.round(amt*0.9) : -amt};
+  });
+  const m = unionData(state.detailCtx).members.find(x=>x.name===name) || {};
+  const au = state.agentUsers.find(x=>x.name===name);
+  // ポイント移行履歴（ダミー＋実際の送受信を合成）
+  const moves = [
+    {dt:"8/25 21:00", type:"レーキバック", amt:+Math.max(Math.round((m.vol||50000)*state.feeRate/100*0.1),100), other:"週次精算"},
+    {dt:"8/22 19:12", type:"受取", amt:+20000, other:`${m.agent||"担当"}エージェント`},
+    {dt:"8/15 10:30", type:"受取", amt:+50000, other:"ユニオン"},
+    {dt:"8/08 22:04", type:"回収", amt:-30000, other:`${m.agent||"担当"}エージェント`},
+  ];
+  const joined = au ? au.joined : `${3+Math.floor(rnd()*4)}/${String(1+Math.floor(rnd()*27)).padStart(2,"0")}`;
+  const refCode = {田中:"TANAKA-9", 鈴木:"SUZUKI-1", 佐藤:"SATO-3"}[m.agent] || null;
+  const ref = (rnd()<0.8 && refCode) ? {code:refCode, by:`${m.agent}エージェント`} : null;
+  const data = {daily, games, moves, joined, ref};
+  memberDataCache[name] = data;
+  return data;
+}
+function memberDetailHTML(){
+  const name = state.memberDetail;
+  const m = unionData(state.detailCtx).members.find(x=>x.name===name) || {name, agent:"—", vol:0, pnl:0, active:true};
+  const d = memberData(name);
+  // 実際のポイント送受信（このセッション中の操作）も履歴に合成
+  const liveMoves = state.transfers
+    .filter(t=>t.target===name)
+    .map(t=>({dt:t.dt, type:t.dir==="send"?"受取":"回収", amt:t.dir==="send"?+t.amt:-t.amt, other:t.actor==="agent"?"田中エージェント":"ユニオン"}));
+  const moves = [...liveMoves, ...d.moves];
+  const total = d.daily.reduce((a,r)=>a+r.pnl,0);
+  const week = d.daily.slice(-7).reduce((a,r)=>a+r.pnl,0);
+  const mStart = new Date(now); mStart.setDate(1); mStart.setHours(0,0,0,0);
+  const month = d.daily.filter(r=>r.t>=mStart).reduce((a,r)=>a+r.pnl,0);
+  const totalBets = d.daily.reduce((a,r)=>a+r.bets,0);
+  const totalWins = d.daily.reduce((a,r)=>a+r.wins,0);
+  const rakeTotal = d.daily.reduce((a,r)=>a+(r.rake||0),0);
+  const rakeWeek = d.daily.slice(-7).reduce((a,r)=>a+(r.rake||0),0);
+  const rakeMonth = d.daily.filter(r=>r.t>=mStart).reduce((a,r)=>a+(r.rake||0),0);
+  return `
+    <h2 class="sec"><button class="btn small" data-mback>← 戻る</button> メンバー詳細</h2>
+    <div class="panel profile">
+      <div class="pava">${esc(name.charAt(0)).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:900">${esc(name)} ${m.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}${m.self?' <span class="pill open">デモ本人</span>':""}</div>
+        <div style="font-size:12px;color:var(--muted)">
+          ユニオン参加日 2026/${esc(d.joined)}・担当エージェント：${esc(m.agent)}・
+          紹介者：${d.ref? `<b class="amb">${esc(d.ref.code)}</b>（${esc(d.ref.by)}）` : "なし（直接参加）"}
+        </div>
+      </div>
+      ${(state.role==="union"||state.role==="admin") ? `
+      <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn small" data-goto="cashier">ポイント送付へ</button>
+        ${state.role==="union" && !m.self && !state.agents.find(g=>g.name===name) ? `<button class="btn small" data-promote="${esc(name)}">エージェントに昇格</button>`:""}
+        ${m.self? "" : `<button class="btn small danger" data-freeze="${esc(name)}">${m.active?"凍結":"凍結解除"}</button>`}
+      </span>` : `<button class="btn small" data-mock="${esc(name)} へのメッセージ（モック）">連絡</button>`}
+    </div>
+    <div class="cards" style="margin-top:14px">
+      ${card("トータル収支", sign(total)+"P", `${totalBets}ベット・勝率${totalBets?Math.round(totalWins/totalBets*100):0}%（全期間）`, total>=0?"pos":"neg")}
+      ${card("直近7日収支", sign(week)+"P", `週レーキ ${yen(rakeWeek)}P`, week>=0?"pos":"neg")}
+      ${card("今月収支", sign(month)+"P", `今月レーキ ${yen(rakeMonth)}P`, month>=0?"pos":"neg")}
+      ${card("トータルレーキ", yen(rakeTotal)+"<small>P</small>", "支払った手数料の累計", "amb")}
+      ${card("今月ベット総額", yen(m.vol)+"<small>P</small>", "レーキバックの計算対象")}
+    </div>
+    <h2 class="sec">収支の推移 — 任意期間で分析</h2>
+    <div class="panel">
+      <div class="periodbar">
+        <button data-mper="7" class="${state.mPeriodKey==="7"?"on":""}">直近7日</button>
+        <button data-mper="month" class="${state.mPeriodKey==="month"?"on":""}">今月</button>
+        <button data-mper="all" class="${state.mPeriodKey==="all"?"on":""}">全期間</button>
+        <span class="range">
+          <input type="date" id="m-from" value="${iso(state.mPeriod.from)}"> 〜 <input type="date" id="m-to" value="${iso(state.mPeriod.to)}">
+          <button class="btn small" id="m-apply">適用</button>
+        </span>
+      </div>
+      <div class="pstats">
+        <div><div class="k">期間収支</div><div class="n" id="mp-pnl">—</div></div>
+        <div><div class="k">期間レーキ</div><div class="n amb" id="mp-rake">—</div></div>
+        <div><div class="k">ベット数</div><div class="n" id="mp-bets">—</div></div>
+        <div><div class="k">勝率</div><div class="n" id="mp-rate">—</div></div>
+        <div><div class="k">1日平均収支</div><div class="n" id="mp-avg">—</div></div>
+      </div>
+      <div class="chart" id="m-chart"></div>
+      <p class="hint" id="mp-note"></p>
+    </div>
+    <div class="grid2" style="margin-top:30px">
+      <div>
+        <h2 class="sec" style="margin-top:0">ゲーム履歴（直近）</h2>
+        <div class="panel tblwrap"><table>
+          <thead><tr><th>日付</th><th>試合</th><th>予想</th><th>ハンデ</th><th>ベット</th><th>損益</th></tr></thead>
+          <tbody>${d.games.map(g=>`
+            <tr><td class="num">${g.dt}</td><td>${esc(g.match)}</td><td><strong>${esc(g.pick)}</strong></td>
+            <td class="amb">${esc(g.hcap)}</td><td class="num">${yen(g.amt)}P</td>
+            <td class="num ${g.pnl>=0?"pos":"neg"}">${g.win?"○":"×"} ${sign(g.pnl)}P</td></tr>`).join("")}</tbody>
+        </table></div>
+      </div>
+      <div>
+        <h2 class="sec" style="margin-top:0">ポイント移行履歴</h2>
+        <div class="panel tblwrap"><table>
+          <thead><tr><th>日時</th><th>種別</th><th>相手</th><th>ポイント</th></tr></thead>
+          <tbody>${moves.map(v=>`
+            <tr><td class="num">${esc(v.dt)}</td>
+            <td>${v.type==="レーキバック"?'<span class="pill open">レーキバック</span>':v.amt>=0?'<span class="pill win">受取</span>':'<span class="pill pend">回収</span>'}</td>
+            <td>${esc(v.other)}</td>
+            <td class="num ${v.amt>=0?"pos":"neg"}">${sign(v.amt)}P</td></tr>`).join("")}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+function renderMemberPeriod(){
+  if(!state.memberDetail || !$("#mp-pnl")) return;
+  const d = memberData(state.memberDetail);
+  const {from, to} = state.mPeriod;
+  const end = new Date(to); end.setHours(23,59,59,999);
+  const rows = d.daily.filter(r=>r.t>=from && r.t<=end);
+  const pnl = rows.reduce((a,r)=>a+r.pnl,0);
+  const bets = rows.reduce((a,r)=>a+r.bets,0);
+  const wins = rows.reduce((a,r)=>a+r.wins,0);
+  const rake = rows.reduce((a,r)=>a+(r.rake||0),0);
+  if($("#mp-rake")) $("#mp-rake").textContent = yen(rake)+"P";
+  const p = $("#mp-pnl");
+  p.textContent = sign(pnl)+"P";
+  p.style.color = pnl>=0 ? "var(--green)" : "var(--red)";
+  $("#mp-bets").textContent = bets+"回";
+  $("#mp-rate").textContent = (bets?Math.round(wins/bets*100):0)+"%";
+  $("#mp-avg").textContent = rows.length? sign(Math.round(pnl/rows.length))+"P" : "—";
+  let bars, note="";
+  if(rows.length>35){
+    bars=[];
+    for(let i=0;i<rows.length;i+=7){
+      const c = rows.slice(i,i+7);
+      bars.push({label:fmtD(c[0].t)+"〜", pnl:c.reduce((a,r)=>a+r.pnl,0)});
+    }
+    note = "期間が長いため週単位で表示しています。";
+  } else {
+    bars = rows.map(r=>({label:fmtD(r.t), pnl:r.pnl}));
+  }
+  const max = Math.max(...bars.map(b=>Math.abs(b.pnl)), 1);
+  const step = Math.ceil(bars.length/12);
+  $("#m-chart").innerHTML = bars.map((b,i)=>{
+    const h = Math.max(Math.round(Math.abs(b.pnl)/max*82), b.pnl===0?2:6);
+    return `<div class="bar ${b.pnl>=0?"up":"down"}"><i style="height:${h}px" title="${b.label} ${sign(b.pnl)}P"></i><span>${i%step===0?b.label:""}</span></div>`;
+  }).join("");
+  $("#mp-note").textContent = note;
+}
+/* ユニオン別データ（東京セントラル＝実データ／他ユニオン＝シード生成ダミー） */
+const unionDataCache = {};
+function unionData(name){
+  if(!name || name==="東京セントラルユニオン") return {agents: state.agents, members: state.members, real:true};
+  if(unionDataCache[name]) return unionDataCache[name];
+  const rnd = mulberry32(hashStr("union:"+name));
+  const agentNames = ["中村","小林","加藤","吉田","山口","松本","井上","木村"];
+  const base = Math.floor(rnd()*8);
+  const agents = Array.from({length:4},(_,i)=>({
+    name: agentNames[(base+i*2)%8],
+    users: 5+Math.floor(rnd()*20),
+    vol: (30+Math.floor(rnd()*120))*10000,
+    back: 10 + Math.floor(rnd()*4)*5,
+  }));
+  const stems = ["taka","yumi","kenta","riku","sora","hiro","aoi","ren"];
+  const members = stems.map(s=>({
+    name: `${s}_${10+Math.floor(rnd()*89)}`,
+    agent: agents[Math.floor(rnd()*4)].name,
+    vol: (10+Math.floor(rnd()*250))*1000,
+    pnl: Math.round((rnd()-0.45)*40000),
+    active: rnd()<0.85,
+  }));
+  const data = {agents, members, real:false};
+  unionDataCache[name] = data;
+  return data;
+}
+
+/* エージェント詳細（ユニオン管理・運営） */
+const AGENT_CODES = {田中:"TANAKA-9", 鈴木:"SUZUKI-1", 佐藤:"SATO-3", 高橋:"TAKA-5", 伊藤:"ITO-2", 渡辺:"WATA-7"};
+function agentDetailHTML(){
+  const name = state.agentDetail;
+  const ud = unionData(state.detailCtx);
+  const g = ud.agents.find(x=>x.name===name);
+  if(!g) return '<p class="empty">エージェントが見つかりません</p>';
+  const members = ud.members.filter(u=>u.agent===name);
+  const memberPnl = members.reduce((a,u)=>a+u.pnl,0);
+  const memberVol = members.reduce((a,u)=>a+u.vol,0);
+  const pay = Math.round(g.vol*state.feeRate/100*g.back/100);
+  const rnd = mulberry32(hashStr("agent:"+name));
+  const weeks = ["8月 第3週","8月 第2週","8月 第1週","7月 第4週"].map(p=>{
+    const vol = Math.round(g.vol/4*(0.7+rnd()*0.6));
+    return {p, vol, pay: Math.round(vol*state.feeRate/100*g.back/100)};
+  });
+  return `
+    <h2 class="sec"><button class="btn small" data-aback>← 戻る</button> エージェント詳細</h2>
+    <div class="panel profile">
+      <div class="pava">${esc(name.charAt(0))}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:900">${esc(name)}エージェント <span class="pill open">稼働中</span></div>
+        <div style="font-size:12px;color:var(--muted)">紹介コード <b class="amb">${AGENT_CODES[name]||"—"}</b>・配下 ${g.users}名・バック率 ${g.back}%（手数料額の${g.back}%・ユニオン設定）</div>
+      </div>
+      <button class="btn small" data-mock="${esc(name)}エージェントへのメッセージ（モック）">連絡</button>
+    </div>
+    <div class="cards" style="margin-top:14px">
+      ${card("配下ベット総額（今月）", yen(g.vol)+"<small>P</small>", "勝ち負け両方がバック対象")}
+      ${card("レーキバック支払（今月）", yen(pay)+"<small>P</small>", `手数料相当額の${g.back}%`, "amb")}
+      ${card("配下ベット総額（今月）", yen(memberVol)+"<small>P</small>", `表示中 ${members.length}名分`)}
+      ${card("配下の合計収支（今月）", sign(memberPnl)+"P", "", memberPnl>=0?"pos":"neg")}
+    </div>
+    <h2 class="sec">週次レーキバック推移</h2>
+    <div class="panel tblwrap"><table>
+      <thead><tr><th>対象期間</th><th>配下ベット総額</th><th>バック率</th><th>支払ポイント</th><th>状態</th></tr></thead>
+      <tbody>${weeks.map((w,i)=>`
+        <tr><td>${w.p}</td><td class="num">${yen(w.vol)}P</td><td class="num">${g.back}%</td>
+        <td class="num amb">${yen(w.pay)}P</td>
+        <td>${i===0?'<span class="pill pend">精算待ち</span>':'<span class="pill win">支払済</span>'}</td></tr>`).join("")}</tbody>
+    </table></div>
+    <h2 class="sec">配下メンバー — 行をタップで詳細ページへ</h2>
+    <div class="panel tblwrap"><table>
+      <thead><tr><th>ユーザー</th><th>今月ベット</th><th>エージェントバック</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
+      <tbody>${members.length? members.map(u=>`
+        <tr class="click" data-mdetail="${esc(u.name)}">
+        <td><strong>${esc(u.name)}</strong>${u.self?' <span class="pill open">デモ本人</span>':""}</td>
+        <td class="num">${yen(u.vol)}P</td>
+        <td class="num pos">${yen(Math.round(u.vol*state.feeRate/100*g.back/100))}P</td>
+        <td class="num ${u.pnl>=0?"pos":"neg"}">${sign(u.pnl)}P</td>
+        <td>${u.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}</td>
+        <td style="color:var(--muted)">→</td></tr>`).join("")
+        : '<tr><td colspan="6" class="empty">このデモでは配下メンバーのダミーデータがありません</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+/* ================= ページ：ホーム ================= */
+function renderHome(){
+  const el = $("#page-home");
+  const pend = {
+    agentReq: state.reqsToAgent.filter(r=>r.status==="pending").length,
+    unionReq: state.reqsToUnion.filter(r=>r.status==="pending").length,
+    join: state.joinRequests.filter(r=>r.status==="pending").length,
+    buy: 0,
+  };
+  const newsHTML = `<h2 class="sec">お知らせ</h2><div class="panel news">${state.notices.map(n=>`<div><span class="d">${n.d}</span><span>${esc(n.t)}</span></div>`).join("")}</div>`;
+
+  if(state.role==="user"){
+    const all = state.dailyPnl;
+    const total = all.reduce((a,r)=>a+r.pnl,0);
+    const week = all.slice(-7).reduce((a,r)=>a+r.pnl,0);
+    const top3 = state.matches.filter(m=>m.status==="open"&&m.deadline>Date.now()).slice(0,3);
+    const pr = state.profile || {name:"demo_user", uid:"100482"};
+    el.innerHTML = `
+      <h2 class="sec">こんばんは、${esc(pr.name)} さん（ID #${pr.uid}）</h2>
+      <div class="cards">
+        ${card("保有ポイント", yen(state.wallets.user)+"<small>P</small>", "ゲーム内専用ポイント", "amb")}
+        ${card("トータル収支", sign(total)+"P", "全期間", total>=0?"pos":"neg")}
+        ${card("直近7日収支", sign(week)+"P", "", week>=0?"pos":"neg")}
+        ${card("支払レーキ（累計）", yen(all.reduce((a,r)=>a+r.rake,0))+"<small>P</small>", "勝ちベットの手数料10%の合計", "amb")}
+      </div>
+      <h2 class="sec"><span class="live"></span>試合速報 <button class="btn small" data-goto="bet">ベットページへ →</button></h2>
+      <div class="uni-list">${state.matches.filter(m=>m.status==="live"||m.status==="final").map(m=>`
+        <div class="uni-card">
+          <div class="ava">⚾</div>
+          <div class="info">
+            <div class="nm">${esc(m.away)} <span class="num amb" style="font-size:17px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span> ${esc(m.home)} ${m.status==="final"?'<span class="pill closed">試合終了</span>':'<span class="livepill">LIVE</span>'}</div>
+            <div class="meta2"><span class="inning" data-linning="${m.id}">${m.status==="final"?"FINAL":m.live.inning}</span>・ハンデ ${esc(m.hcapSide)} ${m.hcap}・<span data-ljudge="${m.id}">${liveJudge(m)}</span></div>
+          </div>
+          <button class="btn small" data-goto="bet">速報</button>
+        </div>`).join("")}
+      </div>
+      <h2 class="sec">まもなく締切の試合</h2>
+      <div class="uni-list">${top3.map(m=>`
+        <div class="uni-card">
+          <div class="ava">⚾</div>
+          <div class="info">
+            <div class="nm">${esc(m.away)} vs ${esc(m.home)} <span class="amb num" style="font-size:12px">ハンデ ${esc(m.hcapSide)} ${m.hcap}</span></div>
+            <div class="meta2"><span class="cd" data-cd="${m.id}">${fmtCd(m.deadline-Date.now())}</span>${state.us.showPool?`・プール <span data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</span>`:""}</div>
+          </div>
+          <button class="btn small primary" data-goto="bet">ベット</button>
+        </div>`).join("")}
+      </div>
+      ${unionSelectHTML()}
+      ${newsHTML}`;
+  }
+  if(state.role==="agent"){
+    const s = rakeSplit();
+    el.innerHTML = `
+      <h2 class="sec">田中エージェント ダッシュボード</h2>
+      <div class="cards">
+        ${card("保有ポイント", yen(state.wallets.agent)+"<small>P</small>", "配布・回収用ウォレット", "amb")}
+        ${card("今月レーキバック（純）", yen(Math.round(s.agentNet))+"<small>P</small>", `総額 ${yen(Math.round(s.agentGross))}P − ユーザー還元 ${yen(Math.round(s.userPay))}P`, "pos")}
+        ${card("配下ユーザー", state.agentUsers.length+"<small>名</small>", "紹介コード TANAKA-9")}
+        ${card("承認待ちリクエスト", pend.agentReq+"<small>件</small>", "キャッシャーで確認", pend.agentReq?"neg":"")}
+      </div>
+      <h2 class="sec">クイックアクション</h2>
+      <div class="cards">
+        <div class="stat"><div class="l">ポイント送付・回収</div><div class="sub" style="margin:6px 0 10px">配下ユーザーを選んでポイントを移動</div><button class="btn small primary" data-goto="cashier">キャッシャーへ</button></div>
+        <div class="stat"><div class="l">ユーザー別バック率</div><div class="sub" style="margin:6px 0 10px">レーキバックの配分を調整</div><button class="btn small primary" data-goto="members">メンバーへ</button></div>
+        <div class="stat"><div class="l">配下の実績</div><div class="sub" style="margin:6px 0 10px">ベット総額・発生手数料を確認</div><button class="btn small primary" data-goto="data">データへ</button></div>
+      </div>
+      ${unionSelectHTML()}
+      ${newsHTML}`;
+  }
+  if(state.role==="union"){
+    el.innerHTML = `
+      <h2 class="sec">東京セントラルユニオン 管理ダッシュボード</h2>
+      <div class="cards">
+        ${card("ユニオン保有ポイント", yen(state.wallets.union)+"<small>P</small>", `メンバー${calc.unionMembers()}名／エージェント${calc.unionAgents()}名`, "amb")}
+        ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "全試合合計・リアルタイム")}
+        ${card("想定粗利（今月）", yen(calc.unionGross())+"<small>P</small>", `ベット総額 ${yen(calc.unionVol())}P × 手数料${state.feeRate.toFixed(1)}% ÷2（勝敗五分想定）`, "amb")}
+        ${card("要対応", (pend.unionReq+pend.join)+"<small>件</small>", `ポイントリクエスト ${pend.unionReq}件・参加申請 ${pend.join}件`, (pend.unionReq+pend.join)?"neg":"")}
+      </div>
+      <h2 class="sec">クイックアクション</h2>
+      <div class="cards">
+        <div class="stat"><div class="l">ハンデ・締切の設定</div><div class="sub" style="margin:6px 0 10px">本日の6試合を管理</div><button class="btn small primary" data-goto="bet">ベット管理へ</button></div>
+        <div class="stat"><div class="l">リクエスト承認</div><div class="sub" style="margin:6px 0 10px">${pend.unionReq}件の承認待ち</div><button class="btn small primary" data-goto="cashier">キャッシャーへ</button></div>
+        <div class="stat"><div class="l">参加申請</div><div class="sub" style="margin:6px 0 10px">${pend.join}件の申請あり</div><button class="btn small primary" data-goto="members">メンバーへ</button></div>
+        <div class="stat"><div class="l">ポイント購入</div><div class="sub" style="margin:6px 0 10px">アイテムを買って交換</div><button class="btn small primary" data-goto="cashier">ショップへ</button></div>
+      </div>
+      ${newsHTML}`;
+  }
+  if(state.role==="admin"){
+    if(state.memberDetail){
+      el.innerHTML = memberDetailHTML();
+      renderMemberPeriod();
+      return;
+    }
+    if(state.agentDetail){
+      el.innerHTML = agentDetailHTML();
+      return;
+    }
+    if(state.adminUnion){
+      el.innerHTML = adminUnionDetailHTML();
+      return;
+    }
+    el.innerHTML = `
+      <h2 class="sec">プラットフォーム運営コンソール</h2>
+      <div class="cards">
+        ${card("稼働ユニオン", calc.activeUnions()+"<small>件</small>", `審査中 ${calc.reviewUnions()}件`)}
+        ${card("総ユーザー数", yen(calc.platformUsers())+"<small>名</small>", "全ユニオン合計")}
+        ${card("今月ポイント流通", fmtM(calc.platformVol())+"<small> P</small>", "稼働ユニオンのベット総額")}
+        ${card("IAP売上（今月）", "¥"+yen(state.iap.reduce((a,x)=>a+x.jpy,0))+"", "アプリ内課金・承認不要", "pos")}
+      </div>
+      <h2 class="sec">クイックアクション</h2>
+      <div class="cards">
+        <div class="stat"><div class="l">課金・交換ログ</div><div class="sub" style="margin:6px 0 10px">アプリ内課金の売上と交換履歴</div><button class="btn small primary" data-goto="cashier">キャッシャーへ</button></div>
+        <div class="stat"><div class="l">監査ログ</div><div class="sub" style="margin:6px 0 10px">発行・移動・警告の全記録</div><button class="btn small primary" data-goto="data">データへ</button></div>
+      </div>
+      ${adminUnionTableHTML()}
+      ${newsHTML}`;
+  }
+}
+
+/* ================= ユニオン関連の部品（ホーム・設定へ配置） ================= */
+function unionSelectHTML(){
+  return `
+      <h2 class="sec">参加中のユニオン</h2>
+      <div class="uni-list">
+        <div class="uni-card active">
+          <div class="ava">⚾</div>
+          <div class="info">
+            <div class="nm">東京セントラルユニオン <span class="pill open">選択中</span></div>
+            <div class="meta2">ID #482913・メンバー${calc.unionMembers()}名・勝ち手数料 ${state.feeRate.toFixed(1)}%・${state.role==="agent"?"あなたの役割：エージェント":"担当：田中エージェント"}</div>
+          </div>
+          <button class="btn small primary" data-goto="bet">ベットへ</button>
+        </div>
+      </div>
+      <h2 class="sec">ユニオンを探す — IDで参加申請</h2>
+      <div class="panel">
+        <div class="inline">
+          <label class="f">ユニオンID（必須）<input type="text" id="join-id" placeholder="例：771204" style="width:140px"></label>
+          <label class="f">紹介者ID／紹介コード<input type="text" id="join-ref" placeholder="例：TANAKA-9" style="width:160px"></label>
+          <button class="btn primary" id="join-btn">参加申請</button>
+        </div>
+        <p class="hint">紹介者IDを入力すると、そのエージェントの配下として申請されます（どこの配下かをユニオンが管理するために使用）。ユニオン管理者が承認すると参加できます。</p>
+      </div>
+      <h2 class="sec">公開ユニオン</h2>
+      <div class="uni-list">${state.publicUnions.map((u,i)=>`
+        <div class="uni-card">
+          <div class="ava">⚾</div>
+          <div class="info">
+            <div class="nm">${esc(u.name)}</div>
+            <div class="meta2">ID #${u.uid}・メンバー${u.members}名・手数料 ${u.fee.toFixed(1)}%${u.refReq?'・<b class="amb">紹介ID必須</b>':""}</div>
+          </div>
+          ${u.status==="pending"
+            ? `<span style="text-align:right"><span class="pill pend">申請中</span>${u.ref?`<div style="font-size:10px;color:var(--muted);margin-top:3px">紹介者ID: <b class="amb">${esc(u.ref)}</b></div>`:""}</span>`
+            : `<button class="btn small" data-join="${i}">参加申請</button>`}
+        </div>`).join("")}
+      </div>`;
+}
+function unionAdminSettingsHTML(){
+  return `
+      <h2 class="sec">ユニオンプロフィール</h2>
+      <div class="uni-card active" style="margin-bottom:14px">
+        <div class="ava">⚾</div>
+        <div class="info">
+          <div class="nm">東京セントラルユニオン</div>
+          <div class="meta2">ID #482913・作成 2026/04/02・管理者 yamamoto・招待コード <b class="amb">UNION-TCU</b></div>
+        </div>
+        <button class="btn small" data-copy="UNION-TCU">招待コードをコピー</button>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-weight:700">勝ちベットへの手数料率（レーキ）</span>
+            <span class="num" style="font-size:24px;color:var(--amber)"><span id="un-fee-view">${state.feeRate.toFixed(1)}</span>%</span>
+          </div>
+          <input type="range" min="1" max="${state.as.feeCap}" step="0.5" id="un-fee" value="${Math.min(state.feeRate, state.as.feeCap)}" style="width:100%">
+          <p class="hint">勝ちベットの獲得分から徴収（例:10%なら勝ちの90%を支払い）。負けベットは全額ユニオン受入。変更は即座に全画面へ反映。上限 ${state.as.feeCap.toFixed(1)}%（運営設定）。</p>
+          <div style="margin-top:12px">${flowHTML()}</div>
+        </div>
+        <div class="panel">
+          <div style="font-weight:700;margin-bottom:8px">基本情報</div>
+          <div class="formgrid">
+            <label class="f">ユニオン名<input type="text" value="東京セントラルユニオン"></label>
+            <label class="f">紹介文<input type="text" value="野球好きが集まる予想ゲームユニオンです"></label>
+            <button class="btn primary" data-mock="基本情報を保存しました">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="sec">ユニオン設定 — 表示・ベットルール</h2>
+      <div class="panel">
+        <div class="setrow">
+          <div><div class="t">予想ボリューム（寄り）の表示</div><div class="desc">オフにするとユーザーのベット画面から寄り・プール総額を非表示にします</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.showPool?"checked":""} data-uset="showPool"><i></i></label>
+        </div>
+        <div class="setrow">
+          <div><div class="t">収支ランキングの公開</div><div class="desc">メンバーページのユニオン内ランキングを表示します</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.showRanking?"checked":""} data-uset="showRanking"><i></i></label>
+        </div>
+        <div class="setrow">
+          <div><div class="t">同一試合への複数ベット</div><div class="desc">オフにすると1試合につき1ベットまでに制限します</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.multiBet?"checked":""} data-uset="multiBet"><i></i></label>
+        </div>
+        <div class="setrow">
+          <div><div class="t">ベット取消の許可</div><div class="desc">締切前ならユーザーがベットを取り消して全額返金できます</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.allowCancel?"checked":""} data-uset="allowCancel"><i></i></label>
+        </div>
+        <div class="setrow">
+          <div><div class="t">ベット下限（1ベット）</div><div class="desc">これ未満のベットは受け付けません</div></div>
+          <span class="end inline" style="align-items:center"><input type="number" style="width:100px" value="${state.us.betMin}" step="100" min="100" data-usetn="betMin">P</span>
+        </div>
+        <div class="setrow">
+          <div><div class="t">試合別ベット上限（1試合あたり）</div><div class="desc">リーグごとに設定。エージェント別・ユーザー別上限との最小値が適用されます</div></div>
+          <span class="end inline" style="align-items:center">
+            <span style="color:var(--muted);font-size:11px">NPB</span><input type="number" style="width:110px" value="${state.us.capNPB}" step="100000" min="10000" data-usetn="capNPB">
+            <span style="color:var(--muted);font-size:11px">MLB</span><input type="number" style="width:110px" value="${state.us.capMLB}" step="100000" min="10000" data-usetn="capMLB">
+          </span>
+        </div>
+        <div class="setrow">
+          <div><div class="t">複数試合縛り</div><div class="desc">1試合だけのベットを禁止し、最低ベット試合数を義務付けます</div></div>
+          <select class="end" data-usets="minGames">
+            <option value="1" ${state.us.minGames==1?"selected":""}>縛りなし</option>
+            <option value="2" ${state.us.minGames==2?"selected":""}>最低2試合</option>
+            <option value="3" ${state.us.minGames==3?"selected":""}>最低3試合</option>
+          </select>
+        </div>
+        <div class="setrow">
+          <div><div class="t">自動締切</div><div class="desc">試合開始の指定分前にベット受付を自動で締め切ります</div></div>
+          <select class="end" data-usets="autoClose">
+            <option value="5" ${state.us.autoClose==5?"selected":""}>開始5分前</option>
+            <option value="10" ${state.us.autoClose==10?"selected":""}>開始10分前</option>
+            <option value="15" ${state.us.autoClose==15?"selected":""}>開始15分前</option>
+            <option value="30" ${state.us.autoClose==30?"selected":""}>開始30分前</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 class="sec">ユニオン設定 — メンバー・精算・安全</h2>
+      <div class="panel">
+        <div class="setrow">
+          <div><div class="t">参加承認</div><div class="desc">新規メンバーの参加方法</div></div>
+          <select class="end" data-usets="joinApproval">
+            <option value="manual" ${state.us.joinApproval==="manual"?"selected":""}>管理者の承認が必要</option>
+            <option value="auto" ${state.us.joinApproval==="auto"?"selected":""}>自動承認</option>
+            <option value="ref" ${state.us.joinApproval==="ref"?"selected":""}>紹介コード必須</option>
+          </select>
+        </div>
+        <div class="setrow">
+          <div><div class="t">エージェントへの配下詳細公開</div><div class="desc">エージェントが配下メンバーの収支・履歴を閲覧できます</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.agentDetail?"checked":""} data-uset="agentDetail"><i></i></label>
+        </div>
+        <div class="setrow">
+          <div><div class="t">レーキバック精算サイクル</div><div class="desc">エージェント・ユーザーへのポイント還元の自動精算</div></div>
+          <select class="end" data-usets="weeklySettle">
+            <option value="day" ${state.us.weeklySettle==="day"?"selected":""}>毎日</option>
+            <option value="mon" ${state.us.weeklySettle==="mon"?"selected":""}>毎週月曜</option>
+            <option value="month" ${state.us.weeklySettle==="month"?"selected":""}>毎月1日</option>
+          </select>
+        </div>
+        <div class="setrow">
+          <div><div class="t">多重アカウント・不正検知</div><div class="desc">同一端末・不審なポイント移動を検知して運営に報告します</div></div>
+          <label class="switch end"><input type="checkbox" ${state.us.ipGuard?"checked":""} data-uset="ipGuard"><i></i></label>
+        </div>
+      </div>
+      <p class="hint">表示・ベットルールの変更は保存不要で即座に全メンバーの画面へ反映されます。</p>`;
+}
+function adminUnionTableHTML(){
+  return `
+      <h2 class="sec">全ユニオン管理 — 行をタップで詳細（エージェント・ユーザー・ベット状況）</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>ユニオン</th><th>管理者</th><th>メンバー</th><th>手数料率</th><th>今月流通P</th><th>状態</th><th></th></tr></thead>
+        <tbody>${state.unions.map(u=>`
+          <tr class="click" data-udetail="${esc(u.name)}"><td><strong>${esc(u.name)}</strong></td><td>${esc(u.owner)}</td>
+          <td class="num">${calc.membersOf(u)||"—"}</td><td class="num">${u.fee.toFixed(1)}%</td>
+          <td class="num">${u.status==="active"? fmtM(calc.unionVolOf(u.name)) : "—"}</td>
+          <td>${u.status==="active"?'<span class="pill open">稼働中</span>':u.status==="review"?'<span class="pill pend">審査中</span>':'<span class="pill stop">停止中</span>'}</td>
+          <td style="color:var(--muted)">→</td></tr>`).join("")}
+        </tbody></table></div>
+      <p class="hint">手数料率の上限は運営設定（現在 ${state.as.feeCap.toFixed(1)}%）。上限到達・急激な流通増加は監査ログに警告として記録されます。</p>`;
+}
+/* ユーザー設定（設定タブ内） */
+function userSettingsHTML(){
+  const pf = state.prefs;
+  return `
+    <h2 class="sec">ベット設定</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">デフォルトベット額</div><div class="desc">ベット画面を開いたときの初期値</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="100" step="1000" value="${pf.defBet}" data-prefn="defBet">P</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">自己規制：1日ベット上限</div><div class="desc">責任あるプレイのための自主設定（0=なし）。エージェント設定の上限と低い方が適用されます</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="10000" value="${pf.selfDayCap}" data-prefn="selfDayCap">P</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">残高を隠す</div><div class="desc">上部バーの保有ポイントを「•••••」表示にします（覗き見防止）</div></div>
+        <label class="switch end"><input type="checkbox" ${pf.hideBal?"checked":""} data-pref="hideBal"><i></i></label>
+      </div>
+    </div>
+    <h2 class="sec">プロフィール編集</h2>
+    <div class="panel">
+      <div class="inline">
+        <label class="f">ニックネーム<input type="text" id="up-name" value="${esc((state.profile||{}).name||"")}" style="width:180px"></label>
+        <button class="btn primary" id="up-save">保存</button>
+      </div>
+      <p class="hint">ホームの挨拶・各画面の表示名に反映されます（IDは変更できません）。</p>
+    </div>`;
+}
+/* エージェント設定（設定タブ内） */
+function agentSettingsHTML(){
+  const a = state.ag;
+  return `
+    <h2 class="sec">エージェント設定 — 新規配下のデフォルト</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">デフォルトバック率</div><div class="desc">新しく配下になったユーザーに自動適用（手数料額の%・上限 ${state.agentBackRate}%）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" class="w60" min="0" max="${state.agentBackRate}" step="5" value="${a.defBack}" data-agn="defBack">%</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">デフォルト上限/試合</div><div class="desc">新規配下の1試合あたりベット上限（0=無制限）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="10000" value="${a.defMcap}" data-agn="defMcap">P</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">デフォルト上限/日</div><div class="desc">新規配下の1日あたりベット上限（0=無制限）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="10000" value="${a.defDcap}" data-agn="defDcap">P</span>
+      </div>
+    </div>
+    <h2 class="sec">エージェント設定 — ポイントリクエスト</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">リクエストの自動承認</div><div class="desc">この額以下の配下からのリクエストは承認操作なしで即時送付します（0=無効）</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="5000" value="${a.autoOk}" data-agn="autoOk">P以下</span>
+      </div>
+    </div>`;
+}
+
+/* 運営：プラットフォーム設定（設定タブ内） */
+function adminSettingsHTML(){
+  const a = state.as;
+  return `
+    <h2 class="sec">プラットフォーム設定 — 手数料・ポイント</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">ユニオン手数料率の上限</div><div class="desc">各ユニオンが設定できるレーキの上限。ユニオン管理者のスライダーに即時反映</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" class="w60" min="1" max="20" step="0.5" value="${a.feeCap}" data-asetn="feeCap">%</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">運営取り分</div><div class="desc">各ユニオンの手数料収入から徴収するプラットフォーム手数料</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" class="w60" min="0" max="50" step="5" value="${a.platformCut}" data-asetn="platformCut">%</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ユニオン開設料</div><div class="desc">新規ユニオン作成時に必要なポイント</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:120px" min="0" step="100000" value="${a.openFee}" data-asetn="openFee">P</span>
+      </div>
+    </div>
+    <h2 class="sec">プラットフォーム設定 — 審査・安全</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">新規ユニオンの審査</div><div class="desc">開設申請の承認方法</div></div>
+        <select class="end" data-asets="review">
+          <option value="manual" ${a.review==="manual"?"selected":""}>運営の審査が必要</option>
+          <option value="auto" ${a.review==="auto"?"selected":""}>自動承認</option>
+        </select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">RMT検知感度</div><div class="desc">サービス外取引が疑われるポイント移動パターンの検知レベル</div></div>
+        <select class="end" data-asets="rmtLevel">
+          <option ${a.rmtLevel==="低"?"selected":""}>低</option>
+          <option ${a.rmtLevel==="中"?"selected":""}>中</option>
+          <option ${a.rmtLevel==="高"?"selected":""}>高</option>
+        </select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">多重アカウントの自動凍結</div><div class="desc">同一端末・同一決済の複数アカウントを検知したら自動で凍結します</div></div>
+        <label class="switch end"><input type="checkbox" ${a.autoFreeze?"checked":""} data-aset="autoFreeze"><i></i></label>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ポイント移動の1回あたり上限</div><div class="desc">エージェント・ユニオンの送付／回収1回に適用されます</div></div>
+        <span class="end inline" style="align-items:center"><input type="number" style="width:130px" min="0" step="100000" value="${a.moveLimit}" data-asetn="moveLimit">P</span>
+      </div>
+    </div>
+    <h2 class="sec">プラットフォーム設定 — アイテム・受付</h2>
+    <div class="panel">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">アプリ内課金アイテムの価格・交換レート（ショップに即時反映）</div>
+      <div class="tblwrap"><table>
+        <thead><tr><th>アイテム</th><th>価格（円）</th><th>交換ポイント</th></tr></thead>
+        <tbody>${state.itemsCatalog.map((it,i)=>`
+          <tr><td>${it.icon} <strong>${it.name}</strong></td>
+          <td><input type="number" style="width:100px" min="0" step="10" value="${it.jpy}" data-itemjpy="${i}"></td>
+          <td><input type="number" style="width:110px" min="0" step="100" value="${it.pts}" data-itempts="${i}"></td></tr>`).join("")}</tbody>
+      </table></div>
+      <div class="setrow" style="margin-top:8px">
+        <div><div class="t">新規登録の受付</div><div class="desc">オフにすると新規アカウント作成を一時停止します</div></div>
+        <label class="switch end"><input type="checkbox" ${a.regOpen?"checked":""} data-aset="regOpen"><i></i></label>
+      </div>
+      <div class="setrow">
+        <div><div class="t">メンテナンスモード</div><div class="desc">全ユーザーにメンテナンス告知を表示します（デモでは表示のみ）</div></div>
+        <label class="switch end"><input type="checkbox" ${a.maint?"checked":""} data-aset="maint"><i></i></label>
+      </div>
+    </div>
+    <p class="hint">手数料上限・移動上限・アイテム価格は保存不要で即時に全ユニオンへ適用されます。</p>`;
+}
+
+/* 運営：ユニオン詳細ビュー（エージェント・メンバー・ベット状況のドリルダウン） */
+function dummyPoolTable(name){
+  const rnd = mulberry32(hashStr("pool:"+name));
+  return `<div class="panel tblwrap"><table>
+    <thead><tr><th>試合</th><th>予想プール</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
+    <tbody>${state.matches.map(m=>{
+      const f = 0.15 + rnd()*0.5;
+      const tot = Math.round((m.pool.a+m.pool.h)*f/1000)*1000;
+      const st = m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':'<span class="pill open">受付中</span>';
+      return `<tr><td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
+      <td class="num amb">${yen(tot)}P</td><td class="num hide-m">${Math.round(m.pool.bets*f)}件</td><td>${st}</td></tr>`;
+    }).join("")}</tbody></table>
+    <p class="hint">このユニオン内のベット状況（デモ用ダミー。実装時はユニオン別の実数を表示）。</p></div>`;
+}
+function adminUnionDetailHTML(){
+  const u = state.unions.find(x=>x.name===state.adminUnion);
+  if(!u) return "";
+  const ud = unionData(u.name);
+  const volSum = ud.agents.reduce((a,g)=>a+g.vol,0);
+  const agentPay = ud.agents.reduce((a,g)=>a+Math.round(g.vol*state.feeRate/100*g.back/100),0);
+  return `
+    <h2 class="sec"><button class="btn small" data-uadback>← 運営ホームに戻る</button> ユニオン詳細（運営ビュー）</h2>
+    <div class="panel profile">
+      <div class="pava">⚾</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:900">${esc(u.name)}
+          ${u.status==="active"?'<span class="pill open">稼働中</span>':u.status==="review"?'<span class="pill pend">審査中</span>':'<span class="pill stop">停止中</span>'}
+        </div>
+        <div style="font-size:12px;color:var(--muted)">管理者 ${esc(u.owner)}・メンバー ${calc.membersOf(u)}名・手数料率 ${u.fee.toFixed(1)}%・今月流通 ${fmtM(volSum)}P</div>
+      </div>
+      <button class="btn small danger" data-mock="${esc(u.name)} の停止処理（モック）">停止</button>
+    </div>
+    <div class="cards" style="margin-top:14px">
+${card("配下ベット総額（今月）", yen(volSum)+"<small>P</small>", "エージェント経由の合計", "amb")}
+      ${card("エージェント支払（今月）", yen(agentPay)+"<small>P</small>", "レーキバック合計")}
+      ${card("運営取り分（今月・想定）", yen(Math.round(volSum*state.feeRate/200*state.as.platformCut/100))+"<small>P</small>", `想定粗利の${state.as.platformCut}%`, "pos")}
+      ${card("エージェント数", ud.agents.length+"<small>名</small>")}
+    </div>
+    <h2 class="sec">エージェント一覧 — 行をタップで詳細</h2>
+    <div class="panel tblwrap"><table>
+      <thead><tr><th>エージェント</th><th>配下</th><th>配下ベット総額（今月）</th><th>バック率</th><th>支払P</th><th></th></tr></thead>
+      <tbody>${ud.agents.map(g=>`
+        <tr class="click" data-adetail="${esc(g.name)}">
+        <td><strong>${esc(g.name)}</strong></td><td class="num">${g.users}名</td>
+        <td class="num">${yen(g.vol)}P</td><td class="num">${g.back}%</td>
+        <td class="num amb">${yen(Math.round(g.vol*state.feeRate/100*g.back/100))}P</td>
+        <td style="color:var(--muted)">→</td></tr>`).join("")}</tbody>
+    </table></div>
+    <h2 class="sec">メンバー一覧${ud.real?"":"（主要メンバー抜粋）"} — 行をタップで詳細</h2>
+    <div class="panel tblwrap"><table>
+      <thead><tr><th>ユーザー</th><th class="hide-m">担当エージェント</th><th>今月ベット</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
+      <tbody>${ud.members.map(m2=>`
+        <tr class="click" data-mdetail="${esc(m2.name)}">
+        <td><strong>${esc(m2.name)}</strong></td><td class="hide-m">${esc(m2.agent)}</td>
+        <td class="num">${yen(m2.vol)}P</td>
+        <td class="num ${m2.pnl>=0?"pos":"neg"}">${sign(m2.pnl)}P</td>
+        <td>${m2.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}</td>
+        <td style="color:var(--muted)">→</td></tr>`).join("")}</tbody>
+    </table></div>
+    <h2 class="sec">本日のベット状況</h2>
+    ${ud.real? poolTable() : dummyPoolTable(u.name)}`;
+}
+
+/* ================= ページ：ベット ================= */
+function renderBet(){
+  const el = $("#page-bet");
+  if(state.role==="user"){
+    const pend = state.history.filter(h=>h.result==="pending");
+    const byMatch = {};
+    pend.forEach(h=>{ (byMatch[h.match] = byMatch[h.match]||[]).push(h); });
+    const distinct = Object.keys(byMatch).length;
+    const totalP = pend.reduce((a,h)=>a+h.amt,0);
+    const needMore = state.us.minGames>1 && distinct>0 && distinct<state.us.minGames;
+    const myBetsBar = pend.length? `
+      <div class="panel" style="margin-top:20px;border-color:var(--green-deep)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <strong>🎯 ベット中 ${distinct}試合・${yen(totalP)}P</strong>
+          ${Object.entries(byMatch).map(([k,arr])=>`<span class="pill open">${esc(k)}〈${arr.map(x=>esc(x.pick)).join("・")}〉${yen(arr.reduce((a,x)=>a+x.amt,0))}P</span>`).join("")}
+        </div>
+        ${needMore? `<p class="hint" style="color:var(--red)">⚠ このユニオンは最低${state.us.minGames}試合縛りです。あと${state.us.minGames-distinct}試合にベットしてください（未達のベットは締切時に返還される想定）。</p>`:""}
+      </div>` : (state.us.minGames>1? `<p class="hint" style="margin-top:16px">ℹ このユニオンは<b>最低${state.us.minGames}試合縛り</b>です（1試合だけのベットは不可）。</p>`:"");
+    el.innerHTML = `
+      ${myBetsBar}
+      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム（9回打切）</h2>
+      ${liveCards("NPB")}
+      <h2 class="sec">NPB 予想受付中 — ナイター${state.us.showPool?"（ユニオン内の寄りをリアルタイム表示）":""}</h2>
+      ${matchCards(true, "NPB")}
+      <h2 class="sec">MLB 本日の結果 — 精算済（延長あり）</h2>
+      ${liveCards("MLB")}
+      <p class="hint">ハンデは日本式（<a href="#" class="link open-hande"><b>ハンデ表を見る</b></a>）。出しチーム基準で<b>丸勝ち=100%／分勝ち・分負け=割合精算／勝負無し=全額返還</b>。「半」は分けの無い明確なライン。勝ち分には手数料 ${state.feeRate.toFixed(1)}% がかかります（丸勝ち10,000P→+9,000P）。<b>延長あり／9回打切</b>は試合ごとにユニオンが設定。試合が始まると自動的に速報表示へ切り替わります。</p>`;
+  }
+  if(state.role==="agent"){
+    el.innerHTML = `
+      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム（9回打切）</h2>
+      ${liveCards("NPB")}
+      <h2 class="sec">NPB 予想受付中 — ナイター</h2>
+      ${matchCards(false, "NPB")}
+      <h2 class="sec">MLB 本日の結果 — 精算済（延長あり）</h2>
+      ${liveCards("MLB")}
+      <p class="hint">エージェントもユーザーとして参加できます（このデモではユーザーロールでベット操作を確認してください）。</p>`;
+  }
+  if(state.role==="union"){
+    if(state.editMatch!==null){
+      el.innerHTML = matchEditHTML();
+      return;
+    }
+    el.innerHTML = `
+      <h2 class="sec"><span class="live"></span>試合速報 — ベット受付は終了・結果確定後に自動精算</h2>
+      ${liveTable(true)}
+      <h2 class="sec">試合・ハンデ管理（ナイター）— タップして編集</h2>
+      ${hcapTable()}
+      <h2 class="sec"><span class="live"></span>試合別 予想ポイント（リアルタイム）</h2>
+      ${poolTable()}`;
+  }
+  if(state.role==="admin"){
+    el.innerHTML = `
+      <h2 class="sec"><span class="live"></span>試合速報</h2>
+      ${liveTable()}
+      <h2 class="sec">東京セントラルユニオンの予想プール（監視ビュー）</h2>
+      ${poolTable()}
+      <p class="hint">運営はベット内容の閲覧のみ可能。ハンデ・締切の設定は各ユニオン管理者が行います。</p>`;
+  }
+}
+
+/* ================= ページ：メンバー ================= */
+function renderMembers(){
+  const el = $("#page-members");
+  if(state.role==="user"){
+    const top = [...state.members].sort((a,b)=>b.pnl-a.pnl).slice(0,5);
+    el.innerHTML = `
+      <h2 class="sec">あなたのプロフィール</h2>
+      <div class="panel profile">
+        <div class="pava">D</div>
+        <div>
+          <div style="font-weight:900">demo_user <span class="pill open">アクティブ</span></div>
+          <div style="font-size:12px;color:var(--muted)">ID #100482・東京セントラルユニオン所属・担当エージェント：田中（バック率 ${state.agentUsers.find(u=>u.self).back}%）</div>
+        </div>
+      </div>
+      <h2 class="sec">ユニオン内 収支ランキング（今月）</h2>
+      ${state.us.showRanking? `<div class="panel tblwrap"><table>
+        <thead><tr><th>#</th><th>ユーザー</th><th>今月ベット</th><th>今月収支</th></tr></thead>
+        <tbody>${top.map((u,i)=>`
+          <tr><td class="num">${i+1}</td><td><strong>${esc(u.name)}</strong>${u.self?' <span class="pill open">あなた</span>':""}</td>
+          <td class="num">${yen(u.vol)}P</td>
+          <td class="num ${u.pnl>=0?"pos":"neg"}">${sign(u.pnl)}P</td></tr>`).join("")}
+        </tbody></table></div>`
+      : '<div class="panel empty">収支ランキングはこのユニオンでは非公開です（ユニオン設定）</div>'}`;
+  }
+  if(state.role==="agent"){
+    if(state.memberDetail){
+      el.innerHTML = memberDetailHTML();
+      renderMemberPeriod();
+      return;
+    }
+    if(state.editUser!==null){
+      el.innerHTML = editUserHTML();
+      return;
+    }
+    el.innerHTML = `
+      <h2 class="sec">紹介コード — ユニオンを広める</h2>
+      <div class="panel">
+        <div class="refcode">
+          <span class="code">TANAKA-9</span>
+          <span style="font-size:12px;color:var(--muted);flex:1;min-width:200px">このコードで登録したユーザーの手数料の一部が、あなたにポイントで還元されます。</span>
+          <button class="btn small" data-copy="TANAKA-9">コピー</button>
+        </div>
+        <div style="margin-top:14px">${flowHTML()}</div>
+      </div>
+      <h2 class="sec">配下ユーザー管理 — タップして個別に編集</h2>
+      <div class="uni-list">${state.agentUsers.map((u,i)=>`
+        <div class="uni-card click" data-euser="${i}">
+          <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
+          <div class="info">
+            <div class="nm">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""} ${u.active?"":'<span class="pill closed">休眠</span>'}</div>
+            <div class="meta2">ベット ${yen(u.vol)}P・バック ${u.back}%・上限/試合 ${u.mcap?yen(u.mcap):"—"}・上限/日 ${u.dcap?yen(u.dcap):"—"}</div>
+          </div>
+          <span class="arrow">→</span>
+        </div>`).join("")}
+      </div>
+      <p class="hint">バック率＝<b>バック原資（ベット額×手数料率）を100%とした割合</b>。上限＝ユニオン設定の <b>${state.agentBackRate}%</b>。タップで編集ページを開きます。</p>`;
+  }
+  if(state.role==="union"){
+    if(state.memberDetail){
+      el.innerHTML = memberDetailHTML();
+      renderMemberPeriod();
+      return;
+    }
+    if(state.editAgent!==null){
+      el.innerHTML = editAgentHTML();
+      return;
+    }
+    const pendJoin = state.joinRequests.filter(r=>r.status==="pending");
+    el.innerHTML = `
+      <h2 class="sec">参加申請 ${pendJoin.length?`<span class="pill pend">${pendJoin.length}件</span>`:""}</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>日時</th><th>ユーザー</th><th>紹介コード</th><th>状態</th><th>操作</th></tr></thead>
+        <tbody>${state.joinRequests.map(r=>`
+          <tr><td class="num">${esc(r.dt)}</td><td><strong>${esc(r.name)}</strong></td><td class="amb">${esc(r.ref||"—")}</td>
+          <td>${statusPill(r.status)}</td>
+          <td>${r.status==="pending"?`<button class="btn small primary" data-ap-j="${r.id}">承認</button> <button class="btn small danger" data-rj-j="${r.id}">却下</button>`:"—"}</td></tr>`).join("")}
+        </tbody></table></div>
+      <h2 class="sec">エージェント別設定 — タップして個別に編集</h2>
+      <div class="uni-list">${state.agents.map((g,i)=>`
+        <div class="uni-card click" data-eagent="${i}">
+          <div class="ava" style="font-size:15px;font-weight:900">${esc(g.name.charAt(0))}</div>
+          <div class="info">
+            <div class="nm">${esc(g.name)}エージェント</div>
+            <div class="meta2">配下 ${g.users}名・ベット総額 ${yen(g.vol)}P・バック ${g.back}%・上限/試合 ${g.matchCap?yen(g.matchCap):"—"}</div>
+          </div>
+          <span class="num amb" style="font-size:13px">${yen(Math.round(g.vol*state.feeRate/100*g.back/100))}P</span>
+          <span class="arrow">→</span>
+        </div>`).join("")}
+      </div>
+      <p class="hint">バック率＝<b>手数料額を100%とした割合</b>（勝ち負け関係なく発生）。金額はレーキバック支払（今月）。</p>
+      <h2 class="sec">メンバー一覧 — 行をタップで詳細ページへ</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>ユーザー</th><th class="hide-m">担当エージェント</th><th>今月ベット</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
+        <tbody>${state.members.map(u=>`
+          <tr class="click" data-mdetail="${esc(u.name)}">
+          <td><strong>${esc(u.name)}</strong>${u.self?' <span class="pill open">デモ本人</span>':""}</td>
+          <td class="hide-m">${esc(u.agent)}</td><td class="num">${yen(u.vol)}P</td>
+          <td class="num ${u.pnl>=0?"pos":"neg"}">${sign(u.pnl)}P</td>
+          <td>${u.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}</td>
+          <td style="color:var(--muted)">→</td></tr>`).join("")}
+        </tbody></table></div>`;
+  }
+  if(state.role==="admin"){
+    el.innerHTML = `
+      <h2 class="sec">プラットフォーム全体のメンバー統計</h2>
+      <div class="cards">
+        ${card("総ユーザー数", yen(calc.platformUsers())+"<small>名</small>", "全ユニオン合計")}
+        ${card("総エージェント数", calc.platformAgents()+"<small>名</small>", "稼働ユニオン合計")}
+        ${card("アクティブ率（7日）", "63<small>%</small>")}
+        ${card("凍結アカウント", "4<small>件</small>", "RMT疑いの監視対象", "neg")}
+      </div>
+      <p class="hint">ユニオン別のエージェント・ユーザー情報は <b>ホーム → 全ユニオン管理の行をタップ</b> で確認できます。運営はここでは不正監視（複数アカウント・RMT疑い）のみを行います。</p>
+      <div style="margin-top:12px"><button class="btn primary" data-goto="home">ユニオン一覧へ（ホーム）</button></div>`;
+  }
+}
+
+/* ================= ページ：キャッシャー ================= */
+function renderCashier(){
+  const el = $("#page-cashier");
+  if(state.role==="user"){
+    const mine = [...state.reqsToAgent, ...state.reqsToUnion].filter(r=>r.from==="あなた").sort((a,b)=>b.id-a.id);
+    const received = state.transfers.filter(t=>t.target.startsWith("あなた"));
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("保有ポイント", yen(state.wallets.user)+"<small>P</small>", "ゲーム内専用・換金不可", "amb")}
+        ${card("レーキバック（今月）", yen(Math.round(state.agentUsers.find(u=>u.self).vol*state.feeRate/100*state.agentUsers.find(u=>u.self).back/100))+"<small>P</small>", `バック率 ${state.agentUsers.find(u=>u.self).back}%（手数料額に対して・エージェント設定）`, "pos")}
+      </div>
+      <h2 class="sec">ポイントリクエスト</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div class="formgrid">
+            <label class="f">リクエスト先
+              <select id="u-req-to">
+                <option value="agent">担当エージェント（田中）</option>
+                <option value="union">ユニオン管理者</option>
+              </select>
+            </label>
+            <label class="f">リクエストポイント<input type="number" id="u-req-amt" value="20000" step="1000" min="1000"></label>
+            <label class="f">メモ（任意）<input type="text" id="u-req-note" placeholder="例：今週分の補充をお願いします"></label>
+            <button class="btn primary" id="u-req-btn">リクエストを送信</button>
+          </div>
+          <p class="hint">承認されると保有ポイントに反映されます。ポイントは<a href="#" class="link open-terms">利用規約</a>のとおりゲーム内専用です。</p>
+        </div>
+        <div class="panel tblwrap">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">リクエスト履歴</div>
+          <table>
+            <thead><tr><th>日時</th><th>宛先</th><th>ポイント</th><th>状態</th></tr></thead>
+            <tbody>${mine.length? mine.map(r=>`
+              <tr><td class="num">${esc(r.dt)}</td><td>${r.toLabel}</td><td class="num amb">${yen(r.amt)}P</td><td>${statusPill(r.status)}</td></tr>`).join("")
+              : '<tr><td colspan="4" class="empty">まだリクエストはありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+      <h2 class="sec">受け取り履歴</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>日時</th><th>差出</th><th>種別</th><th>ポイント</th></tr></thead>
+        <tbody>${received.length? received.map(t=>`
+          <tr><td class="num">${esc(t.dt)}</td><td>${t.actor==="agent"?"田中エージェント":"ユニオン"}</td>
+          <td>${t.dir==="send"?'<span class="pill win">受取</span>':'<span class="pill pend">回収</span>'}</td>
+          <td class="num">${yen(t.amt)}P</td></tr>`).join("")
+          : '<tr><td colspan="4" class="empty">まだ履歴はありません</td></tr>'}</tbody>
+      </table></div>`;
+  }
+  if(state.role==="agent"){
+    const hist = state.transfers.filter(t=>t.actor==="agent");
+    const myReqs = state.reqsToUnion.filter(r=>r.from==="田中エージェント").sort((a,b)=>b.id-a.id);
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("保有ポイント", yen(state.wallets.agent)+"<small>P</small>", "配布・回収用ウォレット", "amb")}
+        ${card("承認待ち", state.reqsToAgent.filter(r=>r.status==="pending").length+"<small>件</small>", "ユーザーからのリクエスト")}
+      </div>
+      <h2 class="sec">ポイント送受信 — ユーザーを選択</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div class="formgrid">
+            <label class="f">対象ユーザー<select id="a-t-user">${state.agentUsers.map(u=>`<option>${esc(u.name)}</option>`).join("")}</select></label>
+            <div class="inline">
+              <label class="f">操作
+                <select id="a-t-dir"><option value="send">送付（あなた → ユーザー）</option><option value="collect">回収（ユーザー → あなた）</option></select>
+              </label>
+              <label class="f">ポイント<input type="number" id="a-t-amt" value="10000" step="1000" min="100"></label>
+              <button class="btn primary" id="a-t-btn">実行</button>
+            </div>
+          </div>
+          <div class="tblwrap" style="margin-top:12px"><table>
+            <thead><tr><th>日時</th><th>操作</th><th>対象</th><th>ポイント</th></tr></thead>
+            <tbody>${hist.length? hist.map(t=>`
+              <tr><td class="num">${esc(t.dt)}</td>
+              <td>${t.dir==="send"?'<span class="pill win">送付</span>':'<span class="pill pend">回収</span>'}</td>
+              <td>${esc(t.target)}</td><td class="num">${yen(t.amt)}P</td></tr>`).join("")
+              : '<tr><td colspan="4" class="empty">履歴はありません</td></tr>'}</tbody>
+          </table></div>
+        </div>
+        <div class="panel tblwrap">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">ユーザーからのリクエスト</div>
+          <table>
+            <thead><tr><th>日時</th><th>ユーザー</th><th>ポイント</th><th class="hide-m">メモ</th><th>状態</th><th>操作</th></tr></thead>
+            <tbody>${state.reqsToAgent.map(r=>`
+              <tr><td class="num">${esc(r.dt)}</td><td><strong>${esc(r.from)}</strong></td>
+              <td class="num amb">${yen(r.amt)}P</td><td style="white-space:normal" class="hide-m">${esc(r.note||"—")}</td>
+              <td>${statusPill(r.status)}</td>
+              <td>${r.status==="pending"?`<button class="btn small primary" data-ap-a="${r.id}">承認</button> <button class="btn small danger" data-rj-a="${r.id}">却下</button>`:"—"}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </div>
+      <h2 class="sec">ユニオンへのポイントリクエスト</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div class="formgrid">
+            <label class="f">リクエストポイント<input type="number" id="a-req-amt" value="100000" step="10000" min="10000"></label>
+            <label class="f">メモ（任意）<input type="text" id="a-req-note" placeholder="例：配下ユーザーへの配布用"></label>
+            <button class="btn primary" id="a-req-btn">ユニオンにリクエスト</button>
+          </div>
+        </div>
+        <div class="panel tblwrap"><table>
+          <thead><tr><th>日時</th><th>ポイント</th><th class="hide-m">メモ</th><th>状態</th></tr></thead>
+          <tbody>${myReqs.length? myReqs.map(r=>`
+            <tr><td class="num">${esc(r.dt)}</td><td class="num amb">${yen(r.amt)}P</td>
+            <td style="white-space:normal" class="hide-m">${esc(r.note||"—")}</td><td>${statusPill(r.status)}</td></tr>`).join("")
+            : '<tr><td colspan="4" class="empty">まだリクエストはありません</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <h2 class="sec">レーキバック精算</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>対象期間</th><th>配下ベット総額</th><th>バック率</th><th>受取ポイント</th><th>状態</th></tr></thead>
+        <tbody>${state.payouts.map((r,i)=>{
+          const back = Math.round(r.vol*state.feeRate/100*state.agentBackRate/100);
+          return `<tr><td>${r.p}</td><td class="num">${yen(r.vol)}P</td>
+            <td class="num">${state.agentBackRate}%</td><td class="num amb">${yen(back)}P</td>
+            <td>${r.claimed?'<span class="pill win">受取済</span>':`<button class="btn small primary" data-claim="${i}">受け取る</button>`}</td></tr>`;
+        }).join("")}</tbody></table></div>`;
+  }
+  if(state.role==="union"){
+    const hist = state.transfers.filter(t=>t.actor==="union");
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("ユニオン保有ポイント", yen(state.wallets.union)+"<small>P</small>", "配布・仕入れ用ウォレット", "amb")}
+        ${card("承認待ち", state.reqsToUnion.filter(r=>r.status==="pending").length+"<small>件</small>", "エージェント・ユーザーからのリクエスト")}
+      </div>
+      <h2 class="sec">ポイント送受信 — エージェント・ユーザー宛て</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div class="formgrid">
+            <label class="f">宛先
+              <select id="un-t-target">
+                <optgroup label="エージェント">${state.agents.map(g=>`<option>${esc(g.name)}エージェント</option>`).join("")}</optgroup>
+                <optgroup label="ユーザー">${state.members.map(u=>`<option>${esc(u.name)}</option>`).join("")}</optgroup>
+              </select>
+            </label>
+            <div class="inline">
+              <label class="f">操作
+                <select id="un-t-dir"><option value="send">送付（ユニオン → 宛先）</option><option value="collect">回収（宛先 → ユニオン）</option></select>
+              </label>
+              <label class="f">ポイント<input type="number" id="un-t-amt" value="50000" step="10000" min="1000"></label>
+              <button class="btn primary" id="un-t-btn">実行</button>
+            </div>
+          </div>
+          <div class="tblwrap" style="margin-top:12px"><table>
+            <thead><tr><th>日時</th><th>操作</th><th>対象</th><th>ポイント</th></tr></thead>
+            <tbody>${hist.length? hist.map(t=>`
+              <tr><td class="num">${esc(t.dt)}</td>
+              <td>${t.dir==="send"?'<span class="pill win">送付</span>':'<span class="pill pend">回収</span>'}</td>
+              <td>${esc(t.target)}</td><td class="num">${yen(t.amt)}P</td></tr>`).join("")
+              : '<tr><td colspan="4" class="empty">履歴はありません</td></tr>'}</tbody>
+          </table></div>
+        </div>
+        <div class="panel tblwrap">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">受信リクエスト</div>
+          <table>
+            <thead><tr><th>日時</th><th>差出</th><th>ポイント</th><th class="hide-m">メモ</th><th>状態</th><th>操作</th></tr></thead>
+            <tbody>${state.reqsToUnion.map(r=>`
+              <tr><td class="num">${esc(r.dt)}</td><td><strong>${esc(r.from)}</strong></td>
+              <td class="num amb">${yen(r.amt)}P</td><td style="white-space:normal" class="hide-m">${esc(r.note||"—")}</td>
+              <td>${statusPill(r.status)}</td>
+              <td>${r.status==="pending"?`<button class="btn small primary" data-ap-u="${r.id}">承認</button> <button class="btn small danger" data-rj-u="${r.id}">却下</button>`:"—"}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </div>
+      <h2 class="sec">ポイント購入 — アプリ内課金アイテムをポイントに交換</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:8px">アイテムショップ（アプリ内課金）</div>
+          <div class="tblwrap"><table>
+            <thead><tr><th>アイテム</th><th>価格</th><th>交換ポイント</th><th></th></tr></thead>
+            <tbody>${state.itemsCatalog.map(it=>`
+              <tr><td>${it.icon} <strong>${it.name}</strong></td>
+              <td class="num">¥${yen(it.jpy)}</td>
+              <td class="num amb">${yen(it.pts)}P</td>
+              <td><button class="btn small primary" data-iapbuy="${it.id}">購入</button></td></tr>`).join("")}</tbody>
+          </table></div>
+          <p class="hint">決済は App Store／Google Play の<b>アプリ内課金のみ</b>（クレジットカード直接決済・現金振込はありません）。アイテムはゲーム内でポイントに交換でき、交換後の払戻し・返金はできません（<a href="#" class="link open-terms">利用規約</a>）。</p>
+        </div>
+        <div class="panel">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:8px">インベントリ — タップでポイントに交換</div>
+          <div class="tblwrap"><table>
+            <thead><tr><th>アイテム</th><th>所持</th><th>交換ポイント</th><th></th></tr></thead>
+            <tbody>${state.itemsCatalog.map(it=>`
+              <tr><td>${it.icon} <strong>${it.name}</strong></td>
+              <td class="num">${state.inventory[it.id]||0}個</td>
+              <td class="num amb">${yen(it.pts)}P</td>
+              <td><button class="btn small" data-iapexch="${it.id}" ${!(state.inventory[it.id]>0)?"disabled":""}>交換する</button></td></tr>`).join("")}</tbody>
+          </table></div>
+          <div class="tblwrap" style="margin-top:12px"><table>
+            <thead><tr><th>日時</th><th>内容</th><th>増減</th></tr></thead>
+            <tbody>${[...state.exch.map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} をポイントに交換`, v:`+${yen(x.pts)}P`, c:"pos"})),
+                      ...state.iap.map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} を購入（アプリ内課金）`, v:`¥${yen(x.jpy)}`, c:""}))].slice(0,8).map(row=>`
+              <tr><td class="num">${esc(row.dt)}</td><td style="white-space:normal">${row.body}</td><td class="num ${row.c}">${row.v}</td></tr>`).join("")}</tbody>
+          </table></div>
+        </div>
+      </div>`;
+  }
+  if(state.role==="admin"){
+    el.innerHTML = `
+      <h2 class="sec">アプリ内課金・ポイント交換ログ（全ユニオン）</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>日時</th><th>ユニオン</th><th>内容</th><th>金額／ポイント</th></tr></thead>
+        <tbody>${[...state.exch.map(x=>({dt:x.dt, u:x.union, body:`${x.icon}${x.name}×${x.qty} をポイントに交換`, v:`+${yen(x.pts)}P`, c:"amb"})),
+                  ...state.iap.map(x=>({dt:x.dt, u:x.union, body:`${x.icon}${x.name}×${x.qty} 購入（IAP売上）`, v:`¥${yen(x.jpy)}`, c:"pos"}))].map(row=>`
+          <tr><td class="num">${esc(row.dt)}</td><td><strong>${esc(row.u)}</strong></td>
+          <td style="white-space:normal">${row.body}</td><td class="num ${row.c}">${row.v}</td></tr>`).join("")}</tbody>
+      </table>
+      <p class="hint">決済はアプリ内課金のみ。運営の承認は不要で、ストア決済の完了と同時にアイテムが付与されます。交換はすべて監査ログに記録。</p></div>
+      <h2 class="sec">ポイント発行</h2>
+      <div class="grid2">
+        <div class="panel">
+          <div class="formgrid">
+            <label class="f">対象ユニオン
+              <select id="ad-issue-union">
+                <option>東京セントラルユニオン</option><option>関西ドラゴンズ会</option>
+                <option>九州ホークスクラブ</option><option>北海道ファイターズ連合</option>
+              </select>
+            </label>
+            <label class="f">発行ポイント<input type="number" id="ad-issue-amt" value="100000" step="10000" min="0"></label>
+            <label class="f">事由<input type="text" id="ad-issue-reason" value="月次イベント原資"></label>
+            <button class="btn primary" id="ad-issue-btn">発行する（監査ログに記録）</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div style="font-weight:700;margin-bottom:6px">発行ポリシー</div>
+          <p class="hint" style="margin:0">発行・移転はすべて監査ログに記録され改竄できません。ポイントに換金性はなく、購入対価の払戻しも行いません。</p>
+        </div>
+      </div>`;
+  }
+}
+
+/* ================= ページ：データ ================= */
+function renderData(){
+  const el = $("#page-data");
+  if(state.role==="user"){
+    const all = state.dailyPnl;
+    const rakeTotal = all.reduce((a,r)=>a+r.rake,0);
+    const rakeWeek = all.slice(-7).reduce((a,r)=>a+r.rake,0);
+    const mStart = new Date(now); mStart.setDate(1); mStart.setHours(0,0,0,0);
+    const rakeMonth = all.filter(r=>r.t>=mStart).reduce((a,r)=>a+r.rake,0);
+    const pnlTotal = all.reduce((a,r)=>a+r.pnl,0);
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("トータル収支", sign(pnlTotal)+"P", "全期間", pnlTotal>=0?"pos":"neg")}
+        ${card("トータルレーキ", yen(rakeTotal)+"<small>P</small>", "支払った手数料の累計", "amb")}
+        ${card("週レーキ（直近7日）", yen(rakeWeek)+"<small>P</small>", "", "amb")}
+        ${card("今月レーキ", yen(rakeMonth)+"<small>P</small>", "", "amb")}
+      </div>
+      <h2 class="sec">収支管理 — 任意期間のレーキも下のフィルタで確認</h2>
+      <div class="panel">
+        <div class="periodbar" id="u-periodbar">
+          <button data-per="7" class="${state.periodKey==="7"?"on":""}">直近7日</button>
+          <button data-per="month" class="${state.periodKey==="month"?"on":""}">今月</button>
+          <button data-per="all" class="${state.periodKey==="all"?"on":""}">全期間</button>
+          <span class="range">
+            <input type="date" id="u-from" value="${iso(state.period.from)}"> 〜 <input type="date" id="u-to" value="${iso(state.period.to)}">
+            <button class="btn small" id="u-apply">適用</button>
+          </span>
+        </div>
+        <div class="pstats">
+          <div><div class="k">期間収支</div><div class="n" id="p-pnl">—</div></div>
+          <div><div class="k">期間レーキ</div><div class="n amb" id="p-rake">—</div></div>
+          <div><div class="k">ベット数</div><div class="n" id="p-bets">—</div></div>
+          <div><div class="k">勝率</div><div class="n" id="p-rate">—</div></div>
+          <div><div class="k">1日平均収支</div><div class="n" id="p-avg">—</div></div>
+        </div>
+        <div class="chart" id="u-chart"></div>
+        <p class="hint" id="p-note"></p>
+      </div>
+      <h2 class="sec">ベット履歴（直近）</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>日時</th><th>試合</th><th>予想</th><th>ハンデ</th><th>ベット</th><th>結果</th><th>損益</th></tr></thead>
+        <tbody>${state.history.map(h=>`
+          <tr><td class="num">${esc(h.dt)}</td><td>${esc(h.match)}</td><td><strong>${esc(h.pick)}</strong></td>
+          <td class="amb">${esc(h.hcap)}</td><td class="num">${yen(h.amt)}P</td>
+          <td>${h.result==="win"?'<span class="pill win">的中</span>':h.result==="lose"?'<span class="pill lose">不的中</span>':h.result==="push"?'<span class="pill closed">返還</span>':'<span class="pill pend">結果待ち</span>'}</td>
+          <td class="num ${h.pnl>0?"pos":h.pnl<0?"neg":""}">${h.result==="pending"?"—":h.result==="push"?"±0P":sign(h.pnl)+"P"}</td></tr>`).join("")}
+        </tbody></table></div>`;
+    renderPeriod();
+  }
+  if(state.role==="agent"){
+    if(state.memberDetail){
+      el.innerHTML = memberDetailHTML();
+      renderMemberPeriod();
+      return;
+    }
+    const s = rakeSplit();
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("配下ベット総額（今月）", yen(s.totVol)+"<small>P</small>")}
+${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<small>P</small>", `手数料相当額の${state.agentBackRate}%`)}
+        ${card("あなたの純取り分", yen(Math.round(s.agentNet))+"<small>P</small>", `ユーザー還元 ${yen(Math.round(s.userPay))}P を差し引き後`, "pos")}
+      </div>
+      <h2 class="sec">ユーザーへのレーキバック支払 — 週・月でいくら返すか／返したか</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>ユーザー</th><th>バック率</th><th>今週（精算待ち）</th><th>先週（支払済）</th><th>今月累計</th></tr></thead>
+        <tbody>${state.agentUsers.map(u=>{
+          const h9 = hashStr("wk:"+u.name);
+          const wThis = Math.round(u.vol*(0.20+(h9%10)/100));   // 今週分のベット額（ダミー配分）
+          const wLast = Math.round(u.vol*(0.24+(h9%7)/100));    // 先週分
+          const bThis = Math.round(wThis*state.feeRate/100*u.back/100);
+          const bLast = Math.round(wLast*state.feeRate/100*u.back/100);
+          const bMonth = Math.round(u.vol*state.feeRate/100*u.back/100);
+          return `<tr>
+            <td><strong>${esc(u.name)}</strong>${u.self?' <span class="pill open">デモ本人</span>':""}</td>
+            <td class="num">${u.back}%</td>
+            <td class="num ${u.back?"amb":""}">${u.back? yen(bThis)+"P" : "—"} ${u.back?'<span class="pill pend">精算待ち</span>':""}</td>
+            <td class="num ${u.back?"pos":""}">${u.back? yen(bLast)+"P" : "—"} ${u.back?'<span class="pill win">支払済</span>':""}</td>
+            <td class="num">${u.back? yen(bMonth)+"P" : "—"}</td>
+          </tr>`;
+        }).join("")}
+        <tr><td><strong>合計</strong></td><td></td>
+          <td class="num amb">${yen(state.agentUsers.reduce((a,u)=>a+Math.round(u.vol*(0.20+(hashStr("wk:"+u.name)%10)/100)*state.feeRate/100*u.back/100),0))}P</td>
+          <td class="num pos">${yen(state.agentUsers.reduce((a,u)=>a+Math.round(u.vol*(0.24+(hashStr("wk:"+u.name)%7)/100)*state.feeRate/100*u.back/100),0))}P</td>
+          <td class="num">${yen(state.agentUsers.reduce((a,u)=>a+Math.round(u.vol*state.feeRate/100*u.back/100),0))}P</td></tr>
+        </tbody></table>
+        <p class="hint">バック率0%のユーザーには支払なし。精算は毎週月曜に自動実行され、あなたのレーキバックから差し引かれます。</p>
+      </div>
+      <h2 class="sec">配下ユーザー実績（今月）— 行をタップで詳細ページへ</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>ユーザー</th><th>ベット総額</th><th>バック原資（手数料相当）</th><th>ユーザー還元</th><th>あなたの取り分</th><th></th></tr></thead>
+        <tbody>${state.agentUsers.map(u=>{
+          const base = u.vol*state.feeRate/100;
+          const userGet = Math.round(base*u.back/100);
+          const agentGet = Math.max(Math.round(base*(state.agentBackRate-u.back)/100),0);
+          return `<tr class="click" data-mdetail="${esc(u.name)}"><td><strong>${esc(u.name)}</strong></td><td class="num">${yen(u.vol)}P</td>
+            <td class="num">${yen(Math.round(base))}P</td><td class="num pos">${yen(userGet)}P</td><td class="num amb">${yen(agentGet)}P</td>
+            <td style="color:var(--muted)">→</td></tr>`;
+        }).join("")}</tbody></table>
+        ${state.us.agentDetail? "" : '<p class="hint">ユニオン設定により配下メンバーの詳細閲覧は現在オフになっています。</p>'}
+      </div>`;
+  }
+  if(state.role==="union"){
+    if(state.memberDetail){
+      el.innerHTML = memberDetailHTML();
+      renderMemberPeriod();
+      return;
+    }
+    if(state.agentDetail){
+      el.innerHTML = agentDetailHTML();
+      return;
+    }
+    const agentPay = state.agents.reduce((a,g)=>a+Math.round(g.vol*state.feeRate/100*g.back/100),0);
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("想定粗利（今月）", yen(calc.unionGross())+"<small>P</small>", `ベット総額 ${yen(calc.unionVol())}P × 手数料${state.feeRate.toFixed(1)}% ÷2（勝敗五分想定）`, "amb")}
+        ${card("エージェント支払（今月）", yen(agentPay)+"<small>P</small>", "レーキバック合計")}
+        ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "リアルタイム")}
+        ${card("今月ベット総額", yen(calc.unionVol())+"<small>P</small>", "エージェント配下の合計")}
+      </div>
+      <h2 class="sec">エージェント別 支払サマリー（今月）— 行をタップで詳細ページへ</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>エージェント</th><th>配下</th><th>配下ベット総額</th><th>バック率</th><th>支払P</th><th></th><th></th></tr></thead>
+        <tbody>${state.agents.map(g=>{
+          const pay = Math.round(g.vol*state.feeRate/100*g.back/100);
+          return `<tr class="click" data-adetail="${esc(g.name)}"><td><strong>${esc(g.name)}</strong></td><td class="num">${g.users}名</td>
+            <td class="num">${yen(g.vol)}P</td><td class="num">${g.back}%</td>
+            <td class="num amb">${yen(pay)}P</td><td class="num">—</td>
+            <td style="color:var(--muted)">→</td></tr>`;
+        }).join("")}</tbody></table></div>
+      <h2 class="sec">ポイント移動履歴（全体）</h2>
+      <div class="panel tblwrap"><table>
+        <thead><tr><th>日時</th><th>実行</th><th>操作</th><th>対象</th><th>ポイント</th></tr></thead>
+        <tbody>${state.transfers.map(t=>`
+          <tr><td class="num">${esc(t.dt)}</td><td>${t.actor==="agent"?"田中エージェント":"ユニオン"}</td>
+          <td>${t.dir==="send"?'<span class="pill win">送付</span>':'<span class="pill pend">回収</span>'}</td>
+          <td>${esc(t.target)}</td><td class="num">${yen(t.amt)}P</td></tr>`).join("")}</tbody>
+      </table></div>`;
+  }
+  if(state.role==="admin"){
+    el.innerHTML = `
+      <div class="cards" style="margin-top:26px">
+        ${card("今月ポイント流通", fmtM(calc.platformVol())+"<small> P</small>", "稼働ユニオンのベット総額")}
+        ${card("運営取り分（今月・想定）", yen(calc.platformCutP())+"<small>P</small>", `各ユニオン想定粗利の${state.as.platformCut}%`, "amb")}
+        ${card("警告（今週）", "3<small>件</small>", "手数料上限・急増検知", "neg")}
+      </div>
+      <h2 class="sec">監査ログ — 発行・移動・警告の全記録</h2>
+      <div class="panel tblwrap" style="max-height:420px;overflow-y:auto"><table>
+        <thead><tr><th>日時</th><th>種別</th><th>内容</th></tr></thead>
+        <tbody>${state.log.map(l=>`
+          <tr><td class="num">${esc(l.dt)}</td><td><span class="pill">${esc(l.type)}</span></td>
+          <td style="white-space:normal">${esc(l.body)}</td></tr>`).join("")}</tbody>
+      </table></div>`;
+  }
+}
+
+/* 収支管理：期間フィルタ */
+function renderPeriod(){
+  if(!state.period || !$("#p-pnl")) return;
+  const {from, to} = state.period;
+  const end = new Date(to); end.setHours(23,59,59,999);
+  const rows = state.dailyPnl.filter(r=>r.t>=from && r.t<=end);
+  const pnl = rows.reduce((a,r)=>a+r.pnl,0);
+  const bets = rows.reduce((a,r)=>a+r.bets,0);
+  const wins = rows.reduce((a,r)=>a+r.wins,0);
+  const rake = rows.reduce((a,r)=>a+(r.rake||0),0);
+  const p = $("#p-pnl");
+  p.textContent = sign(pnl)+"P";
+  p.style.color = pnl>=0 ? "var(--green)" : "var(--red)";
+  if($("#p-rake")) $("#p-rake").textContent = yen(rake)+"P";
+  $("#p-bets").textContent = bets+"回";
+  $("#p-rate").textContent = (bets?Math.round(wins/bets*100):0)+"%";
+  $("#p-avg").textContent = rows.length? sign(Math.round(pnl/rows.length))+"P" : "—";
+  let bars, note="";
+  if(rows.length>35){
+    bars=[];
+    for(let i=0;i<rows.length;i+=7){
+      const c = rows.slice(i,i+7);
+      bars.push({label:fmtD(c[0].t)+"〜", pnl:c.reduce((a,r)=>a+r.pnl,0)});
+    }
+    note = "期間が長いため週単位で表示しています。";
+  } else {
+    bars = rows.map(r=>({label:fmtD(r.t), pnl:r.pnl}));
+  }
+  const max = Math.max(...bars.map(b=>Math.abs(b.pnl)), 1);
+  const step = Math.ceil(bars.length/12);
+  $("#u-chart").innerHTML = bars.map((b,i)=>{
+    const h = Math.max(Math.round(Math.abs(b.pnl)/max*82), b.pnl===0?2:6);
+    return `<div class="bar ${b.pnl>=0?"up":"down"}"><i style="height:${h}px" title="${b.label} ${sign(b.pnl)}P"></i><span>${i%step===0?b.label:""}</span></div>`;
+  }).join("");
+  $("#p-note").textContent = note;
+}
+function setPeriod(from, to, key){
+  state.period = {from, to};
+  state.periodKey = key;
+  if(state.page==="data") renderData();
+}
+
+/* ================= ページ：設定 ================= */
+function renderSettings(){
+  const el = $("#page-settings");
+  const p = state.profile || {name:"demo_user", uid:"100482", email:"demo@union9.app"};
+  const prof = {
+    user:{n:p.name, i:(p.name.charAt(0)||"U").toUpperCase(), sub:`ID #${p.uid}・${p.email}・東京セントラルユニオン所属・担当：田中エージェント`},
+    agent:{n:"田中エージェント", i:"田", sub:"紹介コード TANAKA-9・東京セントラルユニオン所属"},
+    union:{n:"yamamoto（ユニオン管理者）", i:"Y", sub:"東京セントラルユニオン #482913 管理者"},
+    admin:{n:"UNION9 運営", i:"運", sub:"プラットフォーム管理者アカウント"},
+  }[state.role];
+  el.innerHTML = `
+    ${state.role==="user"? userSettingsHTML() : ""}
+    ${state.role==="agent"? agentSettingsHTML() : ""}
+    ${state.role==="union"? unionAdminSettingsHTML() : ""}
+    ${state.role==="admin"? adminSettingsHTML() : ""}
+    <h2 class="sec">アカウント</h2>
+    <div class="panel profile">
+      <div class="pava">${prof.i}</div>
+      <div>
+        <div style="font-weight:900">${esc(prof.n)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(prof.sub)}</div>
+      </div>
+      <button class="btn small end" style="margin-left:auto" data-mock="プロフィール編集（モック）">編集</button>
+    </div>
+    <h2 class="sec">通知</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">試合締切前の通知</div><div class="desc">締切15分前にプッシュ通知</div></div>
+        <label class="switch end"><input type="checkbox" checked data-toggle="締切前通知"><i></i></label>
+      </div>
+      <div class="setrow">
+        <div><div class="t">結果確定の通知</div><div class="desc">ベットした試合の結果が確定したとき</div></div>
+        <label class="switch end"><input type="checkbox" checked data-toggle="結果通知"><i></i></label>
+      </div>
+      <div class="setrow">
+        <div><div class="t">ポイント受け取りの通知</div><div class="desc">送付・レーキバック・リクエスト承認</div></div>
+        <label class="switch end"><input type="checkbox" data-toggle="ポイント通知"><i></i></label>
+      </div>
+    </div>
+    <h2 class="sec">アプリ</h2>
+    <div class="panel">
+      <div class="setrow">
+        <div><div class="t">言語</div></div>
+        <select class="end"><option>日本語</option><option>English</option></select>
+      </div>
+      <div class="setrow">
+        <div><div class="t">利用規約</div><div class="desc">ポイントの性質（換金不可）・禁止事項</div></div>
+        <button class="btn small end open-terms">開く</button>
+      </div>
+      <div class="setrow">
+        <div><div class="t">バージョン</div></div>
+        <span class="end num" style="color:var(--muted)">v0.4.0-proto</span>
+      </div>
+      <div class="setrow">
+        <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
+        <button class="btn small end" id="demo-reset">リセット</button>
+      </div>
+      <div class="setrow">
+        <div><div class="t" style="color:var(--red)">ログアウト</div></div>
+        <button class="btn small danger end" id="logout-btn">ログアウト</button>
+      </div>
+    </div>`;
+}
+
+/* ================= レンダリング統括 ================= */
+function renderTopbar(){
+  const label = {user:"保有", agent:"保有", union:"ユニオン", admin:"運営"}[state.role];
+  const bal = {user:state.wallets.user, agent:state.wallets.agent, union:state.wallets.union, admin:null}[state.role];
+  $("#tb-bal").textContent = bal===null? "∞" : (state.role==="user" && state.prefs.hideBal? "•••••" : yen(bal));
+  $("#tb-bal-l").textContent = label;
+  $("#tb-union").textContent = state.role==="admin"? "運営コンソール" : "東京セントラルユニオン";
+  $("#tb-uid").textContent = state.role==="admin"? "" : "#482913";
+}
+function renderPage(){
+  renderTopbar();
+  renderNav();
+  ({home:renderHome, bet:renderBet, members:renderMembers,
+    cashier:renderCashier, data:renderData, settings:renderSettings})[state.page]();
+  updatePools();
+  saveState();
+}
+function rerender(){ renderPage(); }
+
+/* ================= ベットモーダル（静的要素） ================= */
+function updateBetCalc(){
+  const amt = Math.max(+$("#bm-amt").value||0, 0);
+  const fee = Math.round(amt*state.feeRate/100);
+  $("#bm-fee").textContent = "−"+yen(fee)+"P";
+  $("#bm-win").textContent = "+"+yen(amt-fee)+"P";
+}
+$("#bm-amt").addEventListener("input", updateBetCalc);
+document.querySelectorAll(".quick button").forEach(q=>q.addEventListener("click", ()=>{ $("#bm-amt").value=q.dataset.q; updateBetCalc(); }));
+$("#bm-cancel").addEventListener("click", ()=>$("#bet-overlay").classList.remove("show"));
+$("#bet-overlay").addEventListener("click", e=>{ if(e.target.id==="bet-overlay") $("#bet-overlay").classList.remove("show"); });
+$("#bm-ok").addEventListener("click", ()=>{
+  const amt = Math.max(+$("#bm-amt").value||0, 0);
+  if(!currentBet){ return; }
+  if(amt < state.us.betMin){ toast(`このユニオンの最低ベットは ${yen(state.us.betMin)}P です`); return; }
+  if(amt > state.wallets.user){ toast("ポイントが不足しています"); return; }
+  const m = state.matches.find(x=>x.id===currentBet.matchId);
+  if(!state.us.multiBet && state.history.some(h=>h.result==="pending" && h.match===`${m.away} - ${m.home}`)){
+    toast("このユニオンでは同一試合への複数ベットはできません"); return;
+  }
+  // 上限判定（1試合あたり）: リーグ上限（ユニオン）× エージェント上限 × ユーザー上限 の最小値
+  const already = state.history.filter(h=>h.result==="pending" && h.match===`${m.away} - ${m.home}`).reduce((a,h)=>a+h.amt,0);
+  const selfU = state.agentUsers.find(u=>u.self);
+  const myAgent = state.agents.find(g=>g.name==="田中");
+  const caps = [
+    {v: m.lg==="MLB"? state.us.capMLB : state.us.capNPB, why:`${m.lg}の1試合上限（ユニオン設定）`},
+    {v: myAgent?.matchCap, why:"エージェント設定の1試合上限"},
+    {v: selfU?.mcap, why:"あなたの1試合上限（エージェント設定）"},
+  ].filter(c=>c.v>0);
+  const capHit = caps.find(c=> already + amt > c.v);
+  if(capHit){
+    toast(`${capHit.why} ${yen(capHit.v)}P を超えます${already?`（この試合に既に ${yen(already)}P ベット済み）`:""}`);
+    return;
+  }
+  // 1日あたり上限（未確定ベットの合計で判定）
+  const pendTotal = state.history.filter(h=>h.result==="pending").reduce((a,h)=>a+h.amt,0);
+  if(selfU?.dcap>0 && pendTotal + amt > selfU.dcap){
+    toast(`1日あたりの上限 ${yen(selfU.dcap)}P を超えます（本日 ${yen(pendTotal)}P ベット済み・エージェント設定）`);
+    return;
+  }
+  if(state.prefs.selfDayCap>0 && pendTotal + amt > state.prefs.selfDayCap){
+    toast(`自己規制の1日上限 ${yen(state.prefs.selfDayCap)}P を超えます（設定→ベット設定で変更可）`);
+    return;
+  }
+  state.wallets.user -= amt;
+  m.pool[currentBet.pick===m.away?"a":"h"] += amt;
+  m.pool.bets++;
+  state.history.unshift({dt:nowStr(), match:`${m.away} - ${m.home}`, pick:currentBet.pick,
+    hcap:`${m.hcapSide} ${m.hcap}`, amt, result:"pending", pnl:0});
+  $("#bet-overlay").classList.remove("show");
+  const distinct = new Set(state.history.filter(h=>h.result==="pending").map(h=>h.match)).size;
+  if(state.us.minGames>1 && distinct<state.us.minGames){
+    toast(`${currentBet.pick}に ${yen(amt)}P ベット。⚠ ${state.us.minGames}試合縛り：あと${state.us.minGames-distinct}試合にベットが必要です`);
+  } else {
+    toast(`${currentBet.pick}に ${yen(amt)}P ベットしました`);
+  }
+  rerender();
+});
+$("#terms-close").addEventListener("click", ()=>$("#terms-overlay").classList.remove("show"));
+$("#terms-overlay").addEventListener("click", e=>{ if(e.target.id==="terms-overlay") $("#terms-overlay").classList.remove("show"); });
+$("#join-overlay").addEventListener("click", e=>{ if(e.target.id==="join-overlay") $("#join-overlay").classList.remove("show"); });
+$("#hande-overlay").addEventListener("click", e=>{ if(e.target.id==="hande-overlay") $("#hande-overlay").classList.remove("show"); });
+
+/* ================= 認証（ログイン／新規登録：モック） ================= */
+function enterApp(profile, msg){
+  state.profile = profile;
+  $("#auth-screen").classList.remove("show");
+  setRole("user"); go("home");
+  toast(msg || `ようこそ、${profile.name} さん（ID #${profile.uid}）`);
+}
+$("#atab-login").addEventListener("click", ()=>{
+  $("#atab-login").classList.add("on"); $("#atab-reg").classList.remove("on");
+  $("#aform-login").style.display = "grid"; $("#aform-reg").style.display = "none";
+});
+$("#atab-reg").addEventListener("click", ()=>{
+  $("#atab-reg").classList.add("on"); $("#atab-login").classList.remove("on");
+  $("#aform-reg").style.display = "grid"; $("#aform-login").style.display = "none";
+});
+$("#l-btn").addEventListener("click", ()=>{
+  const email = $("#l-email").value.trim(), pw = $("#l-pw").value;
+  const err = $("#l-err");
+  if(!email || !email.includes("@")){ err.textContent = "メールアドレスを正しく入力してください"; return; }
+  if(!pw){ err.textContent = "パスワードを入力してください"; return; }
+  err.textContent = "";
+  enterApp({name: email.split("@")[0], uid:"100482", email}, `おかえりなさい、${email.split("@")[0]} さん`);
+});
+$("#l-demo").addEventListener("click", ()=>{
+  enterApp({name:"demo_user", uid:"100482", email:"demo@union9.app"});
+});
+$("#l-forgot").addEventListener("click", e=>{ e.preventDefault(); toast("パスワード再設定メールを送信しました（モック）"); });
+$("#r-btn").addEventListener("click", ()=>{
+  const name = $("#r-name").value.trim();
+  const email = $("#r-email").value.trim();
+  const pw = $("#r-pw").value, pw2 = $("#r-pw2").value;
+  const ref = $("#r-ref").value.trim().toUpperCase();
+  const err = $("#r-err");
+  if(!state.as.regOpen){ err.textContent = "現在、新規登録を一時停止しています（運営設定）"; return; }
+  if(!name){ err.textContent = "ニックネームを入力してください"; return; }
+  if(!email || !email.includes("@")){ err.textContent = "メールアドレスを正しく入力してください"; return; }
+  if(pw.length < 6){ err.textContent = "パスワードは6文字以上で設定してください"; return; }
+  if(pw !== pw2){ err.textContent = "確認用パスワードが一致しません"; return; }
+  if(!$("#r-terms").checked){ err.textContent = "利用規約への同意が必要です"; return; }
+  if(state.us.joinApproval==="ref" && !ref){ err.textContent = "このユニオンは紹介コード必須です。エージェントから受け取ったコードを入力してください"; return; }
+  err.textContent = "";
+  const uid = String(100000 + Math.floor(Math.random()*900000)); // ユーザーIDを自動発行
+  const agentName = Object.keys(AGENT_CODES).find(k=>AGENT_CODES[k]===ref);
+  // 紹介コード付きの登録はユニオン管理者の参加申請リストに記録される（配下管理のため）
+  state.joinRequests.unshift({id:++seq, name, dt:nowStr(), ref: ref||"（紹介なし）", status:"approved"});
+  const msg = agentName
+    ? `ID #${uid} を発行しました。${agentName}エージェントの配下として登録されました`
+    : `アカウント作成完了。あなたのIDは #${uid} です`;
+  enterApp({name, uid, email}, msg);
+});
+
+/* ================= クリック委譲 ================= */
+document.addEventListener("click", e=>{
+  const nav = e.target.closest("nav.nav [data-page]");
+  if(nav){ go(nav.dataset.page); return; }
+  const rl = e.target.closest("#roleswitch [data-role]");
+  if(rl){ setRole(rl.dataset.role); return; }
+  const gt = e.target.closest("[data-goto]");
+  if(gt){ go(gt.dataset.goto); return; }
+  if(e.target.closest(".open-terms")){ e.preventDefault(); $("#terms-overlay").classList.add("show"); return; }
+  if(e.target.closest(".open-hande")){ e.preventDefault(); $("#hande-overlay").classList.add("show"); return; }
+  if(e.target.id==="hande-close"){ $("#hande-overlay").classList.remove("show"); return; }
+  // デモ操作パネル
+  if(e.target.id==="demo-fab"){ $("#demo-overlay").classList.add("show"); return; }
+  if(e.target.id==="demo-close"){ $("#demo-overlay").classList.remove("show"); return; }
+  if(e.target.id==="demo-adv"){
+    let n=0;
+    state.matches.forEach(m=>{
+      if(m.status!=="live") return;
+      n++;
+      if(Math.random()<0.6) m.live[Math.random()<0.5?"a":"h"]++;
+      const i = INNINGS.indexOf(m.live.inning);
+      if(i>=0 && i<INNINGS.length-1) m.live.inning = INNINGS[i+1];
+    });
+    rerender();
+    toast(n? `ライブ${n}試合を1イニング進めました` : "試合中のゲームがありません（「新しい試合日を開始」を試してください）");
+    return;
+  }
+  if(e.target.id==="demo-fin"){
+    const lives = state.matches.filter(m=>m.status==="live");
+    if(!lives.length){ toast("試合中のゲームがありません"); return; }
+    $("#demo-overlay").classList.remove("show");
+    lives.forEach(m=>finalize(m));
+    return;
+  }
+  if(e.target.id==="demo-rush"){
+    let n=0;
+    state.matches.forEach(m=>{ if(m.status==="open"){ m.deadline = Date.now()+60000; n++; } });
+    rerender();
+    toast(n? `受付中${n}試合の締切を60秒後にしました` : "受付中の試合がありません");
+    return;
+  }
+  if(e.target.id==="demo-newday"){
+    let refund = 0;
+    state.history.forEach(h=>{ if(h.result==="pending"){ h.result="push"; h.pnl=0; state.wallets.user += h.amt; refund += h.amt; } });
+    state.matches = freshMatches();
+    state.matches.forEach(m=>{ if(m.status==="final" && !m.result) m.result = {out: handeOutcome(m.hcap, matchMargin(m))}; });
+    $("#demo-overlay").classList.remove("show");
+    rerender();
+    toast(refund? `新しい試合日を開始しました（未確定ベット ${yen(refund)}P を返還）` : "新しい試合日を開始しました");
+    return;
+  }
+  if(e.target.id==="demo-reset"){ resetDemo(); return; }
+  const mock = e.target.closest("[data-mock]");
+  if(mock){ toast(mock.dataset.mock); return; }
+  const cp = e.target.closest("[data-copy]");
+  if(cp){ toast(`「${cp.dataset.copy}」をコピーしました`); return; }
+
+  // ベット
+  const b = e.target.closest("[data-bet]");
+  if(b){
+    const m = state.matches.find(x=>x.id==b.dataset.bet);
+    if(!m || m.status==="closed" || m.deadline<=Date.now()) return;
+    currentBet = {matchId:m.id, pick:b.dataset.pick};
+    $("#bm-match").textContent = `${m.away} - ${m.home}（${m.start}開始）`;
+    $("#bm-pick").textContent = b.dataset.pick;
+    $("#bm-hcap").textContent = `${m.hcapSide} ${m.hcap}`;
+    $("#bm-deadline").textContent = fmtCd(m.deadline-Date.now());
+    $("#bm-feerate").textContent = state.feeRate.toFixed(1);
+    $("#bm-amt").value = state.prefs.defBet || 5000;
+    updateBetCalc();
+    $("#bet-overlay").classList.add("show");
+    return;
+  }
+
+  // 期間プリセット
+  const per = e.target.closest("[data-per]");
+  if(per){
+    const today = new Date(now); today.setHours(0,0,0,0);
+    if(per.dataset.per==="7")      setPeriod(new Date(today-6*DAY), today, "7");
+    else if(per.dataset.per==="30")setPeriod(new Date(today-29*DAY), today, "30");
+    else if(per.dataset.per==="month"){ const f=new Date(today); f.setDate(1); setPeriod(f, today, "month"); }
+    else setPeriod(new Date(today-59*DAY), today, "all");
+    return;
+  }
+  if(e.target.id==="u-apply"){
+    const f = new Date($("#u-from").value), t = new Date($("#u-to").value);
+    if(isNaN(f) || isNaN(t) || f>t){ toast("期間の指定が正しくありません"); return; }
+    f.setHours(0,0,0,0); t.setHours(0,0,0,0);
+    setPeriod(f, t, "custom");
+    return;
+  }
+
+  // 編集ページ（配下ユーザー／エージェント／試合）
+  const eu = e.target.closest("[data-euser]");
+  if(eu && !e.target.closest("input,select,button")){ state.editUser = +eu.dataset.euser; rerender(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-euback]")){ state.editUser = null; rerender(); return; }
+  const eg = e.target.closest("[data-eagent]");
+  if(eg && !e.target.closest("input,select,button")){ state.editAgent = +eg.dataset.eagent; rerender(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-egback]")){ state.editAgent = null; rerender(); return; }
+  const em = e.target.closest("[data-ematch]");
+  if(em && !e.target.closest("input,select,button")){ state.editMatch = +em.dataset.ematch; rerender(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-emback]")){ state.editMatch = null; rerender(); return; }
+  // メンバー詳細（ユニオン管理・エージェント）
+  const md = e.target.closest("[data-mdetail]");
+  if(md){
+    if(state.role==="agent" && !state.us.agentDetail){
+      toast("ユニオン設定により配下メンバーの詳細は閲覧できません");
+      return;
+    }
+    state.memberDetail = md.dataset.mdetail;
+    const today = new Date(now); today.setHours(0,0,0,0);
+    state.mPeriod = {from:new Date(today-6*DAY), to:today};
+    state.mPeriodKey = "7";
+    rerender(); window.scrollTo(0,0);
+    return;
+  }
+  if(e.target.closest("[data-mback]")){
+    state.memberDetail = null;
+    rerender();
+    return;
+  }
+  // エージェント詳細（ユニオンのデータ画面・運営のユニオン詳細）
+  const ad = e.target.closest("[data-adetail]");
+  if(ad){
+    state.agentDetail = ad.dataset.adetail;
+    rerender(); window.scrollTo(0,0);
+    return;
+  }
+  if(e.target.closest("[data-aback]")){
+    state.agentDetail = null;
+    rerender();
+    return;
+  }
+  // 運営：ユニオン詳細
+  const udt = e.target.closest("[data-udetail]");
+  if(udt){
+    state.adminUnion = udt.dataset.udetail;
+    state.detailCtx = udt.dataset.udetail;
+    state.agentDetail = null;
+    state.memberDetail = null;
+    rerender(); window.scrollTo(0,0);
+    return;
+  }
+  if(e.target.closest("[data-uadback]")){
+    state.adminUnion = null;
+    state.detailCtx = null;
+    rerender();
+    return;
+  }
+  // メンバーの凍結／解除（ユニオン管理・運営）
+  const fz = e.target.closest("[data-freeze]");
+  if(fz){
+    const u = unionData(state.detailCtx).members.find(x=>x.name===fz.dataset.freeze);
+    if(u){
+      u.active = !u.active;
+      const au = state.agentUsers.find(x=>x.name===u.name);
+      if(au) au.active = u.active;
+      state.log.unshift({dt:nowStr(), type:"凍結", body:`${u.name} のアカウントを${u.active?"凍結解除":"凍結"}しました`});
+      rerender();
+      toast(`${u.name} を${u.active?"凍結解除":"凍結"}しました`);
+    }
+    return;
+  }
+  // メンバーをエージェントに昇格（ユニオン管理）
+  const pm = e.target.closest("[data-promote]");
+  if(pm){
+    const name = pm.dataset.promote;
+    if(!state.agents.find(g=>g.name===name)){
+      state.agents.push({name, users:0, vol:0, back:10});
+      state.log.unshift({dt:nowStr(), type:"昇格", body:`${name} をエージェントに昇格（初期バック率 10%）`});
+      rerender();
+      toast(`${name} をエージェントに昇格しました（バック率 10%・メンバーページで調整可）`);
+    }
+    return;
+  }
+  const mper = e.target.closest("[data-mper]");
+  if(mper){
+    const today = new Date(now); today.setHours(0,0,0,0);
+    if(mper.dataset.mper==="7")      { state.mPeriod={from:new Date(today-6*DAY), to:today}; state.mPeriodKey="7"; }
+    else if(mper.dataset.mper==="30"){ state.mPeriod={from:new Date(today-29*DAY), to:today}; state.mPeriodKey="30"; }
+    else if(mper.dataset.mper==="month"){ const f=new Date(today); f.setDate(1); state.mPeriod={from:f, to:today}; state.mPeriodKey="month"; }
+    else { state.mPeriod={from:new Date(today-59*DAY), to:today}; state.mPeriodKey="all"; }
+    rerender();
+    return;
+  }
+  if(e.target.id==="m-apply"){
+    const f = new Date($("#m-from").value), t = new Date($("#m-to").value);
+    if(isNaN(f) || isNaN(t) || f>t){ toast("期間の指定が正しくありません"); return; }
+    f.setHours(0,0,0,0); t.setHours(0,0,0,0);
+    state.mPeriod = {from:f, to:t}; state.mPeriodKey = "custom";
+    rerender();
+    return;
+  }
+
+  // ユーザー：リクエスト送信
+  if(e.target.id==="u-req-btn"){
+    const amt = +$("#u-req-amt").value||0;
+    if(amt<1000){ toast("1,000P以上を入力してください"); return; }
+    const to = $("#u-req-to").value;
+    const req = {id:++seq, dt:nowStr(), from:"あなた", amt, note:$("#u-req-note").value.trim(), status:"pending",
+                 toLabel: to==="agent"?"田中エージェント":"ユニオン管理者"};
+    const autoOk = to==="agent" && state.ag.autoOk>0 && amt<=state.ag.autoOk && amt<=state.wallets.agent;
+    if(autoOk){
+      req.status = "approved";
+      state.wallets.agent -= amt;
+      state.wallets.user += amt;
+      state.transfers.unshift({dt:nowStr(), actor:"agent", target:"あなた（demo_user）", amt, dir:"send"});
+    }
+    (to==="agent"? state.reqsToAgent : state.reqsToUnion).unshift(req);
+    rerender();
+    toast(autoOk
+      ? `${yen(amt)}P が自動承認され、残高に反映されました（エージェント設定：${yen(state.ag.autoOk)}P以下は即承認）`
+      : `${req.toLabel}に ${yen(amt)}P をリクエストしました`);
+    return;
+  }
+  // エージェント：送受信
+  if(e.target.id==="a-t-btn"){
+    const name = $("#a-t-user").value, amt = +$("#a-t-amt").value||0, dir = $("#a-t-dir").value;
+    if(amt<100){ toast("100P以上を入力してください"); return; }
+    if(amt > state.as.moveLimit){ toast(`ポイント移動の1回あたり上限は ${yen(state.as.moveLimit)}P です（運営設定）`); return; }
+    const isSelf = name.startsWith("あなた");
+    if(dir==="send"){
+      if(amt>state.wallets.agent){ toast("エージェントの保有ポイントが不足しています"); return; }
+      state.wallets.agent -= amt;
+      if(isSelf) state.wallets.user += amt;
+    } else {
+      if(isSelf){
+        if(amt>state.wallets.user){ toast(`${name} の保有ポイントが不足しています`); return; }
+        state.wallets.user -= amt;
+      }
+      state.wallets.agent += amt;
+    }
+    state.transfers.unshift({dt:nowStr(), actor:"agent", target:name, amt, dir});
+    rerender();
+    toast(`${name} ${dir==="send"?"へ":"から"} ${yen(amt)}P を${dir==="send"?"送付":"回収"}しました`);
+    return;
+  }
+  // エージェント：ユニオンへリクエスト
+  if(e.target.id==="a-req-btn"){
+    const amt = +$("#a-req-amt").value||0;
+    if(amt<10000){ toast("10,000P以上を入力してください"); return; }
+    state.reqsToUnion.unshift({id:++seq, dt:nowStr(), from:"田中エージェント", amt,
+      note:$("#a-req-note").value.trim(), status:"pending"});
+    rerender();
+    toast(`ユニオンに ${yen(amt)}P をリクエストしました`);
+    return;
+  }
+  // ユニオン：送受信
+  if(e.target.id==="un-t-btn"){
+    const name = $("#un-t-target").value, amt = +$("#un-t-amt").value||0, dir = $("#un-t-dir").value;
+    if(amt<1000){ toast("1,000P以上を入力してください"); return; }
+    if(amt > state.as.moveLimit){ toast(`ポイント移動の1回あたり上限は ${yen(state.as.moveLimit)}P です（運営設定）`); return; }
+    const isSelf = name.startsWith("あなた");
+    const isTanaka = name==="田中エージェント";
+    if(dir==="send"){
+      if(amt>state.wallets.union){ toast("ユニオンの保有ポイントが不足しています"); return; }
+      state.wallets.union -= amt;
+      if(isSelf) state.wallets.user += amt;
+      if(isTanaka) state.wallets.agent += amt;
+    } else {
+      if(isSelf){
+        if(amt>state.wallets.user){ toast(`${name} の保有ポイントが不足しています`); return; }
+        state.wallets.user -= amt;
+      }
+      if(isTanaka){
+        if(amt>state.wallets.agent){ toast("田中エージェントの保有ポイントが不足しています"); return; }
+        state.wallets.agent -= amt;
+      }
+      state.wallets.union += amt;
+    }
+    state.transfers.unshift({dt:nowStr(), actor:"union", target:name, amt, dir});
+    rerender();
+    toast(`${name} ${dir==="send"?"へ":"から"} ${yen(amt)}P を${dir==="send"?"送付":"回収"}しました`);
+    return;
+  }
+  // ユニオン：アイテム購入（アプリ内課金モック）
+  const ib = e.target.closest("[data-iapbuy]");
+  if(ib){
+    const it = state.itemsCatalog.find(x=>x.id===ib.dataset.iapbuy);
+    state.inventory[it.id] = (state.inventory[it.id]||0)+1;
+    state.iap.unshift({dt:nowStr(), union:"東京セントラルユニオン", name:it.name, icon:it.icon, qty:1, jpy:it.jpy});
+    rerender();
+    toast(`（アプリ内課金モック）${it.name}を購入しました。インベントリから交換できます`);
+    return;
+  }
+  // ユニオン：アイテム→ポイント交換
+  const ix = e.target.closest("[data-iapexch]");
+  if(ix){
+    const it = state.itemsCatalog.find(x=>x.id===ix.dataset.iapexch);
+    if(!(state.inventory[it.id]>0)) return;
+    state.inventory[it.id]--;
+    state.wallets.union += it.pts;
+    state.exch.unshift({dt:nowStr(), union:"東京セントラルユニオン", name:it.name, icon:it.icon, qty:1, pts:it.pts});
+    state.log.unshift({dt:nowStr(), type:"交換", body:`東京セントラルユニオン：${it.name}×1 を ${yen(it.pts)}P に交換（アプリ内課金アイテム）`});
+    rerender();
+    toast(`${it.name}を ${yen(it.pts)}P に交換しました`);
+    return;
+  }
+  // 運営：発行
+  if(e.target.id==="ad-issue-btn"){
+    const amt = +$("#ad-issue-amt").value||0;
+    if(amt<=0){ toast("発行ポイントを入力してください"); return; }
+    state.log.unshift({dt:nowStr(), type:"発行",
+      body:`${$("#ad-issue-union").value}へ ${yen(amt)}P 発行（${$("#ad-issue-reason").value||"事由なし"}）`});
+    if($("#ad-issue-union").value==="東京セントラルユニオン") state.wallets.union += amt;
+    rerender();
+    toast(`${yen(amt)}P を発行し、監査ログに記録しました`);
+    return;
+  }
+
+  // 承認・却下・その他
+  const apA = e.target.closest("[data-ap-a]"); const rjA = e.target.closest("[data-rj-a]");
+  const apU = e.target.closest("[data-ap-u]"); const rjU = e.target.closest("[data-rj-u]");
+  const apJ = e.target.closest("[data-ap-j]"); const rjJ = e.target.closest("[data-rj-j]");
+  const cl = e.target.closest("[data-close]"); const ro = e.target.closest("[data-reopen]");
+  const drill = e.target.closest("[data-drill]");
+  const join = e.target.closest("[data-join]");
+  const claim = e.target.closest("[data-claim]");
+
+  if(apA){
+    const q = state.reqsToAgent.find(x=>x.id==apA.dataset.apA);
+    if(q && q.status==="pending"){
+      if(q.amt>state.wallets.agent){ toast("エージェントの保有ポイントが不足しています"); return; }
+      q.status = "approved";
+      state.wallets.agent -= q.amt;
+      if(q.from==="あなた") state.wallets.user += q.amt;
+      state.transfers.unshift({dt:nowStr(), actor:"agent", target:q.from, amt:q.amt, dir:"send"});
+      rerender(); toast(`${q.from} のリクエスト ${yen(q.amt)}P を承認しました`);
+    }
+    return;
+  }
+  if(rjA){
+    const q = state.reqsToAgent.find(x=>x.id==rjA.dataset.rjA);
+    if(q && q.status==="pending"){ q.status="rejected"; rerender(); toast("リクエストを却下しました"); }
+    return;
+  }
+  if(apU){
+    const q = state.reqsToUnion.find(x=>x.id==apU.dataset.apU);
+    if(q && q.status==="pending"){
+      if(q.amt>state.wallets.union){ toast("ユニオンの保有ポイントが不足しています"); return; }
+      q.status = "approved";
+      state.wallets.union -= q.amt;
+      if(q.from==="あなた") state.wallets.user += q.amt;
+      if(q.from==="田中エージェント") state.wallets.agent += q.amt;
+      state.transfers.unshift({dt:nowStr(), actor:"union", target:q.from, amt:q.amt, dir:"send"});
+      rerender(); toast(`${q.from} のリクエスト ${yen(q.amt)}P を承認しました`);
+    }
+    return;
+  }
+  if(rjU){
+    const q = state.reqsToUnion.find(x=>x.id==rjU.dataset.rjU);
+    if(q && q.status==="pending"){ q.status="rejected"; rerender(); toast("リクエストを却下しました"); }
+    return;
+  }
+  if(apJ){
+    const r = state.joinRequests.find(x=>x.id==apJ.dataset.apJ);
+    if(r && r.status==="pending"){
+      r.status = "approved";
+      const ag = (r.ref||"").startsWith("TANAKA")? "田中" : (r.ref||"").startsWith("SUZUKI")? "鈴木" : "未割当";
+      state.members.push({name:r.name, agent:ag, vol:0, pnl:0, active:true});
+      if(ag==="田中"){
+        // 田中配下ならエージェント設定のデフォルト（バック率・上限）を自動適用
+        state.agentUsers.push({name:r.name, joined:fmtD(new Date()), vol:0,
+          back:state.ag.defBack, mcap:state.ag.defMcap, dcap:state.ag.defDcap, active:true});
+      }
+      rerender(); toast(`${r.name} の参加を承認しました（担当：${ag}${ag==="田中"?`・デフォルト設定適用：バック${state.ag.defBack}%／試合上限${state.ag.defMcap?yen(state.ag.defMcap)+"P":"なし"}`:""}）`);
+    }
+    return;
+  }
+  if(rjJ){
+    const r = state.joinRequests.find(x=>x.id==rjJ.dataset.rjJ);
+    if(r && r.status==="pending"){ r.status="rejected"; rerender(); toast("参加申請を却下しました"); }
+    return;
+  }
+  if(cl){
+    const m = state.matches.find(x=>x.id==cl.dataset.close);
+    m.status = "closed"; rerender(); toast(`${m.away} - ${m.home} の受付を締め切りました`);
+    return;
+  }
+  if(ro){
+    const m = state.matches.find(x=>x.id==ro.dataset.reopen);
+    m.status = "open"; m.deadline = Date.now()+30*60*1000;
+    rerender(); toast(`${m.away} - ${m.home} の受付を再開しました（締切30分後）`);
+    return;
+  }
+  // ユニオン：結果確定 → 自動精算
+  const fin = e.target.closest("[data-final]");
+  if(fin){
+    const m = state.matches.find(x=>x.id==fin.dataset.final);
+    if(m) finalize(m);
+    return;
+  }
+  if(drill && !e.target.closest("input,select,button")){
+    const name = drill.dataset.drill;
+    state.openDrill = state.openDrill===name ? null : name;
+    rerender();
+    return;
+  }
+  if(join){
+    const u = state.publicUnions[+join.dataset.join];
+    $("#j-uid").value = u.uid;
+    $("#j-ref").value = "";
+    $("#j-target").textContent = `${u.name}（ID #${u.uid}）への参加申請`;
+    $("#join-overlay").classList.add("show");
+    return;
+  }
+  if(e.target.id==="join-btn"){
+    const uid = ($("#join-id")?.value||"").trim();
+    const ref = ($("#join-ref")?.value||"").trim().toUpperCase();
+    if(!uid){ toast("ユニオンIDを入力してください"); return; }
+    const u = state.publicUnions.find(x=>x.uid===uid);
+    if(!u){ toast(`ID #${uid} のユニオンが見つかりません（デモ：771204 / 350081 / 118872）`); return; }
+    if(u.refReq && !ref){ toast(`${u.name} は紹介ID必須のユニオンです。紹介者IDを入力してください`); return; }
+    u.status = "pending";
+    u.ref = ref || null;
+    rerender();
+    toast(ref
+      ? `${u.name} に参加申請しました（紹介者ID：${ref}／管理者の承認待ち）`
+      : `${u.name} に参加申請しました（紹介なし／管理者の承認待ち）`);
+    return;
+  }
+  if(e.target.id==="j-cancel"){ $("#join-overlay").classList.remove("show"); return; }
+  if(e.target.id==="j-ok"){
+    const uid = $("#j-uid").value.trim();
+    const ref = $("#j-ref").value.trim().toUpperCase();
+    if(!uid){ toast("ユニオンIDを入力してください"); return; }
+    const u = state.publicUnions.find(x=>x.uid===uid);
+    if(!u){ toast(`ID #${uid} のユニオンが見つかりません（デモ：771204 / 350081 / 118872）`); return; }
+    if(u.refReq && !ref){ toast(`${u.name} は紹介ID必須のユニオンです。紹介者IDを入力してください`); return; }
+    u.status = "pending";
+    u.ref = ref || null;
+    $("#join-overlay").classList.remove("show");
+    rerender();
+    toast(ref
+      ? `${u.name} に参加申請しました（紹介ID：${ref}／管理者の承認待ち）`
+      : `${u.name} に参加申請しました（紹介なし／管理者の承認待ち）`);
+    return;
+  }
+  const cb = e.target.closest("[data-cancelbet]");
+  if(cb){
+    const m = state.matches.find(x=>x.id==cb.dataset.cancelbet);
+    if(!m || !state.us.allowCancel || m.deadline<=Date.now()){ toast("締切後のベットは取り消せません"); return; }
+    const key = `${m.away} - ${m.home}`;
+    let refund = 0;
+    state.history.filter(h=>h.result==="pending" && h.match===key).forEach(h=>{
+      refund += h.amt;
+      m.pool[h.pick===m.away?"a":"h"] = Math.max(0, m.pool[h.pick===m.away?"a":"h"] - h.amt);
+      m.pool.bets = Math.max(0, m.pool.bets-1);
+    });
+    state.history = state.history.filter(h=>!(h.result==="pending" && h.match===key));
+    state.wallets.user += refund;
+    rerender();
+    toast(`${key} のベット ${yen(refund)}P を取り消して返金しました`);
+    return;
+  }
+  if(e.target.id==="up-save"){
+    const nm = ($("#up-name")?.value||"").trim();
+    if(!nm){ toast("ニックネームを入力してください"); return; }
+    if(state.profile){ state.profile.name = nm; }
+    rerender();
+    toast(`ニックネームを「${nm}」に変更しました`);
+    return;
+  }
+  if(e.target.id==="logout-btn"){
+    state.profile = null;
+    saveState();
+    $("#auth-screen").classList.add("show");
+    toast("ログアウトしました");
+    return;
+  }
+  if(claim){
+    const r = state.payouts[+claim.dataset.claim];
+    if(r && !r.claimed){
+      const back = Math.round(r.vol*state.feeRate/100*state.agentBackRate/100);
+      r.claimed = true;
+      state.wallets.agent += back;
+      rerender(); toast(`${r.p}のレーキバック ${yen(back)}P を受け取りました`);
+    }
+    return;
+  }
+});
+
+/* ================= 変更委譲 ================= */
+document.addEventListener("input", e=>{
+  if(e.target.id==="un-fee"){
+    $("#un-fee-view").textContent = (+e.target.value).toFixed(1);
+  }
+});
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t.id==="un-fee"){
+    state.feeRate = +t.value;
+    rerender(); toast(`手数料率を ${state.feeRate.toFixed(1)}% に変更しました`);
+    return;
+  }
+  if(t.dataset.toggle){ toast(`${t.dataset.toggle}を${t.checked?"オン":"オフ"}にしました`); return; }
+  // ユニオン設定
+  if(t.dataset.uset){
+    state.us[t.dataset.uset] = t.checked;
+    const names = {showPool:"予想ボリュームの表示", showRanking:"収支ランキングの公開", multiBet:"同一試合への複数ベット", allowCancel:"ベット取消の許可", agentDetail:"配下詳細の公開", ipGuard:"不正検知"};
+    rerender();
+    toast(`${names[t.dataset.uset]||t.dataset.uset}を${t.checked?"オン":"オフ"}にしました`);
+    return;
+  }
+  if(t.dataset.usetn){
+    const v = Math.max(+t.value||0, 0);
+    state.us[t.dataset.usetn] = v;
+    rerender();
+    const nm = {betMin:`ベット下限を ${yen(state.us.betMin)}P にしました`,
+                capNPB:`NPBの1試合上限を ${yen(state.us.capNPB)}P にしました`,
+                capMLB:`MLBの1試合上限を ${yen(state.us.capMLB)}P にしました`}[t.dataset.usetn];
+    toast(nm || "設定を変更しました");
+    return;
+  }
+  // ユーザー設定
+  if(t.dataset.pref){
+    state.prefs[t.dataset.pref] = t.checked;
+    rerender();
+    toast(t.dataset.pref==="hideBal" ? `残高を${t.checked?"隠しました":"表示します"}` : "設定を変更しました");
+    return;
+  }
+  if(t.dataset.prefn){
+    const v = Math.max(+t.value||0, 0);
+    state.prefs[t.dataset.prefn] = v;
+    rerender();
+    toast({defBet:`デフォルトベット額を ${yen(v)}P にしました`,
+           selfDayCap: v? `自己規制の1日上限を ${yen(v)}P にしました` : "自己規制の1日上限を解除しました"}[t.dataset.prefn]||"設定を変更しました");
+    return;
+  }
+  // エージェント設定
+  if(t.dataset.agn){
+    let v = Math.max(+t.value||0, 0);
+    if(t.dataset.agn==="defBack") v = Math.min(v, state.agentBackRate);
+    state.ag[t.dataset.agn] = v;
+    rerender();
+    toast({defBack:`新規配下のデフォルトバック率を ${v}% にしました`,
+           defMcap:`新規配下のデフォルト上限/試合を ${v?yen(v)+"P":"無制限"} にしました`,
+           defDcap:`新規配下のデフォルト上限/日を ${v?yen(v)+"P":"無制限"} にしました`,
+           autoOk: v? `リクエスト自動承認を ${yen(v)}P 以下に設定しました` : "リクエスト自動承認を無効にしました"}[t.dataset.agn]||"設定を変更しました");
+    return;
+  }
+  // 運営（プラットフォーム）設定
+  if(t.dataset.itemjpy !== undefined && t.dataset.itemjpy !== ""){
+    const it = state.itemsCatalog[+t.dataset.itemjpy];
+    it.jpy = Math.max(+t.value||0, 0);
+    rerender(); toast(`${it.name}の価格を ¥${yen(it.jpy)} にしました`);
+    return;
+  }
+  if(t.dataset.itempts !== undefined && t.dataset.itempts !== ""){
+    const it = state.itemsCatalog[+t.dataset.itempts];
+    it.pts = Math.max(+t.value||0, 0);
+    rerender(); toast(`${it.name}の交換ポイントを ${yen(it.pts)}P にしました`);
+    return;
+  }
+  if(t.dataset.aset){
+    state.as[t.dataset.aset] = t.checked;
+    rerender();
+    toast(`${{autoFreeze:"多重アカウントの自動凍結", regOpen:"新規登録の受付", maint:"メンテナンスモード"}[t.dataset.aset]||t.dataset.aset}を${t.checked?"オン":"オフ"}にしました`);
+    return;
+  }
+  if(t.dataset.asetn){
+    const v = Math.max(+t.value||0, 0);
+    state.as[t.dataset.asetn] = v;
+    if(t.dataset.asetn==="feeCap" && state.feeRate > v){ state.feeRate = v; }
+    const names = {feeCap:`ユニオン手数料率の上限を ${v.toFixed(1)}% にしました`,
+                   platformCut:`運営取り分を ${v}% にしました`,
+                   openFee:`ユニオン開設料を ${yen(v)}P にしました`,
+                   moveLimit:`ポイント移動の1回あたり上限を ${yen(v)}P にしました`};
+    rerender();
+    toast(names[t.dataset.asetn]||"設定を変更しました");
+    return;
+  }
+  if(t.dataset.asets){
+    state.as[t.dataset.asets] = t.value;
+    rerender();
+    toast(t.dataset.asets==="review"
+      ? (t.value==="auto"?"新規ユニオン審査を「自動承認」にしました":"新規ユニオン審査を「運営の審査が必要」にしました")
+      : `RMT検知感度を「${t.value}」にしました`);
+    return;
+  }
+  if(t.dataset.usets){
+    state.us[t.dataset.usets] = t.value;
+    if(t.dataset.usets==="minGames") state.us.minGames = +t.value;
+    const label = {minGames: +t.value===1? "複数試合縛りを解除しました" : `最低${t.value}試合の縛りを設定しました（1試合のみのベットは警告されます）`,
+                   autoClose:`自動締切を開始${t.value}分前に設定しました`,
+                   joinApproval:{manual:"参加承認を「管理者の承認が必要」にしました", auto:"参加承認を「自動承認」にしました", ref:"参加承認を「紹介コード必須」にしました"}[t.value],
+                   weeklySettle:{day:"精算サイクルを「毎日」にしました", mon:"精算サイクルを「毎週月曜」にしました", month:"精算サイクルを「毎月1日」にしました"}[t.value]}[t.dataset.usets];
+    rerender();
+    toast(label||"設定を変更しました");
+    return;
+  }
+  if(t.dataset.hcap){
+    const m = state.matches.find(x=>x.id==t.dataset.hcap);
+    m.hcap = t.value;
+    rerender(); toast(`${m.away} - ${m.home} のハンデを「${m.hcap}」に変更しました`);
+    return;
+  }
+  if(t.dataset.hside){
+    const m = state.matches.find(x=>x.id==t.dataset.hside);
+    m.hcapSide = t.value;
+    rerender(); toast(`ハンデ側を ${m.hcapSide} に変更しました`);
+    return;
+  }
+  if(t.dataset.ext){
+    const m = state.matches.find(x=>x.id==t.dataset.ext);
+    m.ext = t.value==="1";
+    rerender(); toast(`${m.away} - ${m.home} を「${m.ext?"延長あり":"9回打切"}」に変更しました`);
+    return;
+  }
+  if(t.dataset.dl){
+    const m = state.matches.find(x=>x.id==t.dataset.dl);
+    const [h,mi] = t.value.split(":").map(Number);
+    const d = new Date(); d.setHours(h,mi,0,0);
+    m.deadline = d.getTime();
+    rerender(); toast("締切時刻を変更しました");
+    return;
+  }
+  if(t.dataset.back !== undefined && t.dataset.back !== ""){
+    const g = state.agents[+t.dataset.back];
+    g.back = Math.max(0, Math.min(100, +t.value||0));
+    if(g.name==="田中"){
+      state.agentBackRate = g.back;
+      state.agentUsers.forEach(u=>{ if(u.back>g.back) u.back = g.back; });
+    }
+    rerender(); toast(`${g.name}エージェントのバック率を ${g.back}%（手数料額に対して）に変更しました`);
+    return;
+  }
+  if(t.dataset.acap !== undefined && t.dataset.acap !== ""){
+    const g = state.agents[+t.dataset.acap];
+    g.matchCap = Math.max(0, +t.value||0);
+    rerender(); toast(`${g.name}エージェントの1試合上限を ${g.matchCap? yen(g.matchCap)+"P" : "無制限"} にしました`);
+    return;
+  }
+  if(t.dataset.umcap !== undefined && t.dataset.umcap !== ""){
+    const u = state.agentUsers[+t.dataset.umcap];
+    u.mcap = Math.max(0, +t.value||0);
+    rerender(); toast(`${u.name} の1試合上限を ${u.mcap? yen(u.mcap)+"P" : "無制限"} にしました`);
+    return;
+  }
+  if(t.dataset.udcap !== undefined && t.dataset.udcap !== ""){
+    const u = state.agentUsers[+t.dataset.udcap];
+    u.dcap = Math.max(0, +t.value||0);
+    rerender(); toast(`${u.name} の1日上限を ${u.dcap? yen(u.dcap)+"P" : "無制限"} にしました`);
+    return;
+  }
+  if(t.dataset.uback !== undefined && t.dataset.uback !== ""){
+    const u = state.agentUsers[+t.dataset.uback];
+    u.back = Math.max(0, Math.min(state.agentBackRate, +t.value||0));
+    rerender(); toast(`${u.name} のバック率を ${u.back}%（手数料額に対して）に変更しました`);
+    return;
+  }
+});
+
+/* ================= 初期化 ================= */
+(function init(){
+  state.matches = freshMatches();
+  const restored = loadState();     // 保存があれば復元（残高・履歴・設定・試合状況）
+  syncDerived();
+  const today = new Date(now); today.setHours(0,0,0,0);
+  state.period = {from:new Date(today-6*DAY), to:today};
+  // シードデータの終了試合に判定結果を付与（精算済として表示）
+  state.matches.forEach(m=>{ if(m.status==="final" && !m.result) m.result = {out: handeOutcome(m.hcap, matchMargin(m))}; });
+  if(restored && state.profile){
+    $("#auth-screen").classList.remove("show");   // 自動ログイン
+    toast(`おかえりなさい、${state.profile.name} さん（前回の続きから）`);
+  }
+  renderPage();
+})();
+</script>
+
+</body>
+</html>
