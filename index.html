@@ -1037,6 +1037,29 @@ function finalize(m){
     toast(`${key} の結果が確定しました（${resText}）`);
   }
 }
+/* 試合別のユニオン損益（プール×ハンデ判定から算出） */
+function unionMatchPnl(m){
+  if(m.status!=="live" && m.status!=="final") return null;
+  const out = handeOutcome(m.hcap, matchMargin(m));
+  const fracA = (m.hcapSide===m.away) ? out : -out;   // awayサイドのベット勢の結果
+  const fracH = -fracA;
+  const side = (vol, f)=> f>0
+    ? {inflow:0, payout: vol*f/10*(1-state.feeRate/100)}   // 勝ち側へ配当支払（手数料は差し引き＝ユニオン残）
+    : f<0 ? {inflow: vol*(-f)/10, payout:0}                 // 負け側から受入（分負けは割合分のみ）
+    : {inflow:0, payout:0};                                  // 勝負無しは全額返還＝損益ゼロ
+  const x = side(m.pool.a, fracA), y = side(m.pool.h, fracH);
+  const inflow = Math.round(x.inflow + y.inflow);
+  const payout = Math.round(x.payout + y.payout);
+  return {inflow, payout, net: inflow - payout};
+}
+function upnlHTML(m){
+  const pl = unionMatchPnl(m);
+  if(!pl) return '<span style="color:var(--muted);font-size:11px">開始後に表示</span>';
+  if(m.status==="final"){
+    return `<span class="pos">+${yen(pl.inflow)}</span> <span class="neg">−${yen(pl.payout)}</span><br><b class="${pl.net>=0?"pos":"neg"}">純益 ${sign(pl.net)}P</b>`;
+  }
+  return `<span style="color:var(--muted);font-size:10px">見込み</span> <b class="${pl.net>=0?"pos":"neg"}">${sign(pl.net)}P</b>`;
+}
 function finLabel(m){
   return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
 }
@@ -1082,7 +1105,7 @@ function liveTable(withAction){
   const lives = state.matches.filter(m=>m.status==="live" || m.status==="final");
   if(!lives.length) return '<div class="panel empty">現在試合中のゲームはありません</div>';
   return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>スコア</th><th>イニング</th><th>ハンデ</th><th>判定</th><th>最終プール</th>${withAction?"<th>操作</th>":""}</tr></thead>
+    <thead><tr><th>試合</th><th>スコア</th><th>イニング</th><th>ハンデ</th><th>判定</th><th class="hide-m">最終プール</th><th>ユニオン損益</th>${withAction?"<th>操作</th>":""}</tr></thead>
     <tbody>${lives.map(m=>{
       const fin = m.status==="final";
       return `
@@ -1091,7 +1114,8 @@ function liveTable(withAction){
       <td class="amb num" data-linning="${m.id}">${fin? finLabel(m) : m.live.inning}</td>
       <td class="amb">${esc(m.hcapSide)} ${m.hcap}</td>
       <td data-ljudge="${m.id}">${liveJudge(m)}</td>
-      <td class="num" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
+      <td class="num hide-m" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
+      <td class="num" style="line-height:1.5" data-upnl="${m.id}">${upnlHTML(m)}</td>
       ${withAction? `<td>${fin? '<span class="pill win">精算済</span>' : `<button class="btn small primary" data-final="${m.id}">結果確定</button>`}</td>`:""}</tr>`;
     }).join("")}</tbody>
   </table>${withAction? '<p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ判定→対象ベットの自動精算（的中者へ配当・手数料徴収・返還）を実行します。9回裏終了時は自動確定。</p>':""}</div>`;
@@ -1102,6 +1126,17 @@ function updateLive(){
     document.querySelectorAll(`[data-lscore="${m.id}"]`).forEach(el=>el.textContent=`${m.live.a} - ${m.live.h}`);
     document.querySelectorAll(`[data-linning="${m.id}"]`).forEach(el=>el.textContent = m.status==="final"? finLabel(m) : m.live.inning);
     document.querySelectorAll(`[data-ljudge="${m.id}"]`).forEach(el=>el.textContent=liveJudge(m));
+    document.querySelectorAll(`[data-upnl="${m.id}"]`).forEach(el=>el.innerHTML=upnlHTML(m));
+  });
+  // ユニオンホームの本日損益カード
+  const fins = state.matches.filter(m=>m.status==="final").reduce((a,m)=>a+(unionMatchPnl(m)?.net||0),0);
+  const livs = state.matches.filter(m=>m.status==="live").reduce((a,m)=>a+(unionMatchPnl(m)?.net||0),0);
+  document.querySelectorAll("[data-upnl-fin]").forEach(el=>{
+    el.textContent = sign(fins)+"P";
+    el.classList.toggle("pos", fins>=0); el.classList.toggle("neg", fins<0);
+  });
+  document.querySelectorAll("[data-upnl-liv]").forEach(el=>{
+    el.textContent = `試合中の見込み ${sign(livs)}P`;
   });
 }
 const INNINGS = ["1回表","1回裏","2回表","2回裏","3回表","3回裏","4回表","4回裏","5回表","5回裏","6回表","6回裏","7回表","7回裏","8回表","8回裏","9回表","9回裏"];
@@ -1154,7 +1189,7 @@ function matchCards(interactive, league){
 }
 function poolTable(){
   return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
+    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>ユニオン損益</th><th>状態</th></tr></thead>
     <tbody>${state.matches.map(m=>{
       const closed = m.status==="closed" || m.deadline<=Date.now();
       return `<tr>
@@ -1162,6 +1197,7 @@ function poolTable(){
         <td class="num amb" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
         <td><div class="pool" style="min-width:220px" data-pool="${m.id}">${poolHTML(m)}</div></td>
         <td class="num hide-m" data-pbets="${m.id}">${m.pool.bets}件</td>
+        <td class="num" style="line-height:1.5" data-upnl="${m.id}">${upnlHTML(m)}</td>
         <td>${m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}</td>
       </tr>`;
     }).join("")}</tbody></table></div>`;
@@ -1672,6 +1708,7 @@ function renderHome(){
       <div class="cards">
         ${card("ユニオン保有ポイント", yen(state.wallets.union)+"<small>P</small>", `メンバー${calc.unionMembers()}名／エージェント${calc.unionAgents()}名`, "amb")}
         ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "全試合合計・リアルタイム")}
+        ${card('<span class="live"></span>本日の試合損益', `<span data-upnl-fin>—</span>`, `<span data-upnl-liv>—</span>`)}
         ${card("想定粗利（今月）", yen(calc.unionGross())+"<small>P</small>", `ベット総額 ${yen(calc.unionVol())}P × 手数料${state.feeRate.toFixed(1)}% ÷2（勝敗五分想定）`, "amb")}
         ${card("要対応", (pend.unionReq+pend.join)+"<small>件</small>", `ポイントリクエスト ${pend.unionReq}件・参加申請 ${pend.join}件`, (pend.unionReq+pend.join)?"neg":"")}
       </div>
