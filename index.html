@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.1
+      UIプロトタイプ v0.7.2
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.2 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -706,7 +706,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.1：データページの試合別損益記録をコンパクトな一覧に変更（タップで精算内訳の詳細ページへ）"},
+    {d:"8/28", t:"v0.7.2：ユーザー画面の表示を整理（速報はハンデ判定を非表示・ベット中の試合は予想収益を表示・終了試合は結果のみ）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1176,6 +1176,36 @@ function unionPnlDetailHTML(){
 function finLabel(m){
   return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
 }
+/* 自分の未確定ベットの現時点での予想収益（試合単位で合算・レーキ差引後） */
+function myExpPnl(m){
+  const key = `${m.away} - ${m.home}`;
+  const bets = state.history.filter(h=>h.result==="pending" && h.match===key);
+  if(!bets.length) return null;
+  const out = handeOutcome(m.hcap, matchMargin(m));
+  let sum = 0;
+  bets.forEach(h=>{
+    const fr = (h.pick===m.hcapSide) ? out : -out;
+    if(fr>0){
+      const winAmt = Math.round(h.amt*fr/10);
+      sum += winAmt - Math.round(winAmt*state.feeRate/100);
+    } else if(fr<0){
+      sum -= Math.round(h.amt*(-fr)/10);
+    }
+  });
+  return sum;
+}
+/* ホーム速報用：ベットしている試合だけ予想収益／確定収支を1項目で表示 */
+function myBetLine(m){
+  if(m.status==="final"){
+    const settled = state.history.filter(h=>h.mid===m.id);
+    if(!settled.length) return "";
+    const s = settled.reduce((a,h)=>a+h.pnl,0);
+    return `・あなたの収支 <b class="num ${s>=0?"pos":"neg"}">${sign(s)}P</b>`;
+  }
+  const e = myExpPnl(m);
+  if(e===null) return "";
+  return `・予想収益 <b class="num ${e>=0?"pos":"neg"}" data-bexp="${m.id}">${sign(e)}P</b>`;
+}
 function liveCards(league){
   const lives = state.matches.filter(m=>(m.status==="live" || m.status==="final") && (!league || m.lg===league));
   if(!lives.length) return '<div class="panel empty">対象の試合はありません</div>';
@@ -1187,7 +1217,9 @@ function liveCards(league){
     let myLine = "";
     if(myBet){
       if(!fin || myBet.result==="pending"){
-        myLine = `あなたのベット：<b>${esc(myBet.pick)}</b> ${yen(myBet.amt)}P（結果待ち）`;
+        const e = myExpPnl(m);
+        const picks = myBets.filter(h=>h.result==="pending").map(h=>`<b>${esc(h.pick)}</b> ${yen(h.amt)}P`).join("・");
+        myLine = `あなたのベット：${picks}${e!==null? ` → 予想収益 <b class="num ${e>=0?"pos":"neg"}" data-bexp="${m.id}">${sign(e)}P</b>`:""}`;
       } else {
         const total = myBets.reduce((a,h)=>a+h.pnl,0);
         const fl = myBet.frac!==undefined && Math.abs(myBet.frac)!==10 ? `（${fracLabel(myBet.frac)}）` : "";
@@ -1208,7 +1240,7 @@ function liveCards(league){
         <span class="s-score" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
         <span class="s-team">${esc(m.home)}</span>
       </div>
-      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>・${fin?"結果":"ハンデ判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b>${fin?"・精算済":""}</div>
+      <div class="hcap">${fin? `結果：<b class="amb">${liveJudge(m)}</b>` : `ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>`}</div>
       ${myLine? `<div class="mybet">${myLine}</div>`:""}
       ${state.us.showPool? `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`:""}
     </div>`;
@@ -1246,6 +1278,11 @@ function updateLive(){
       const c = unionMatchPnl(m); if(!c) return;
       el.textContent = sign(c.net)+"P"+(m.status==="final"?"":"（見込み）");
       el.classList.toggle("pos", c.net>=0); el.classList.toggle("neg", c.net<0);
+    });
+    document.querySelectorAll(`[data-bexp="${m.id}"]`).forEach(el=>{
+      const e = myExpPnl(m); if(e===null) return;
+      el.textContent = sign(e)+"P";
+      el.classList.toggle("pos", e>=0); el.classList.toggle("neg", e<0);
     });
   });
   // ユニオンホームの本日損益カード
@@ -1292,7 +1329,7 @@ function matchCards(interactive, league){
         <span class="cd ${closed?"over":""}" data-cd="${m.id}">${closed?"締切済":fmtCd(m.deadline-Date.now())}</span>
       </div>
       <div class="teams"><span class="team">${esc(m.away)}</span><span class="vs">VS</span><span class="team">${esc(m.home)}</span></div>
-      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>（出し：${esc(m.hcapSide)}・<a href="#" class="link open-hande">ハンデ表</a>）</div>
+      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b></div>
       ${mb.length? `<div class="mybet" style="border-color:var(--green-deep)">🎯 ベット中：${mb.map(b=>`<b>${esc(b.pick)}</b> ${yen(b.amt)}P`).join(" ／ ")}${state.us.allowCancel && !closed? ` <button class="btn small danger" data-cancelbet="${m.id}" style="margin-left:6px">取消</button>`:""}</div>`:""}
       ${state.us.showPool? `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`
         : '<div style="font-size:10.5px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:6px;padding:3px">予想の寄りは非公開です（ユニオン設定）</div>'}
@@ -1785,7 +1822,7 @@ function renderHome(){
           <div class="ava">⚾</div>
           <div class="info">
             <div class="nm">${esc(m.away)} <span class="num amb" style="font-size:17px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span> ${esc(m.home)} ${m.status==="final"?'<span class="pill closed">試合終了</span>':'<span class="livepill">LIVE</span>'}</div>
-            <div class="meta2"><span class="inning" data-linning="${m.id}">${m.status==="final"?"FINAL":m.live.inning}</span>・ハンデ ${esc(m.hcapSide)} ${m.hcap}・<span data-ljudge="${m.id}">${liveJudge(m)}</span></div>
+            <div class="meta2"><span class="inning" data-linning="${m.id}">${m.status==="final"?finLabel(m):m.live.inning}</span>${myBetLine(m)}</div>
           </div>
           <button class="btn small" data-goto="bet">速報</button>
         </div>`).join("")}
@@ -2883,7 +2920,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.1-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.2-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
