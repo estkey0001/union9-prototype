@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.6.1
+      UIプロトタイプ v0.7.0
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.6.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -705,7 +705,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.6.1：試合別損益のレーキバックを勝ち側＋負け側の両方から算出するよう修正しました"},
+    {d:"8/28", t:"v0.7.0：ユニオン管理のベットページを整理（試合速報と損益を1カードに統合・予想ポイント表は受付中の試合のみに）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1092,17 +1092,22 @@ function upnlBoxHTML(m){
 function unionPnlCards(){
   const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
   if(!list.length) return '<div class="panel empty">試合中・終了の試合はありません</div>';
-  return `<div class="uni-list">${list.map(m=>`
+  return `<div class="uni-list">${list.map(m=>{
+    const fin = m.status==="final";
+    return `
     <div class="panel" style="padding:12px 14px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:7px">
-        ${m.status==="final"? '<span class="pill closed">確定</span>':'<span class="livepill">LIVE</span>'}
+        ${fin? '<span class="pill closed">試合終了・精算済</span>':'<span class="livepill">LIVE</span>'}
         <span class="pill">${m.lg}</span>
         <strong style="color:var(--text);font-size:13px">${esc(m.away)} - ${esc(m.home)}</strong>
-        <span class="num amb" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
-        <span data-linning="${m.id}">${m.status==="final"? finLabel(m): m.live.inning}</span>
+        <span class="num amb" style="font-size:15px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
+        <span>・${m.ext?"延長あり":"9回打切"}</span>
+        ${fin? "" : `<button class="btn small primary" style="margin-left:auto" data-final="${m.id}">結果確定</button>`}
       </div>
       <div data-upnlbox="${m.id}">${upnlBoxHTML(m)}</div>
-    </div>`).join("")}</div>`;
+    </div>`;}).join("")}</div>
+  <p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ表判定→自動精算（配当支払・手数料徴収・返還）を実行します。9回裏終了（延長は決着時）は自動確定。1試合ずつの精算記録は<b>データページ</b>に残ります。</p>`;
 }
 /* データページ（ユニオン管理）：1試合ずつの精算記録 */
 function upnlRecBodyHTML(m){
@@ -1267,17 +1272,18 @@ function matchCards(interactive, league){
     </div>`;
   }).join("")}</div>`;
 }
-function poolTable(){
+function poolTable(openOnly){
+  const list = openOnly ? state.matches.filter(m=>m.status!=="live" && m.status!=="final") : state.matches;
+  if(!list.length) return '<div class="panel empty">受付中の試合はありません</div>';
   return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>ユニオン損益</th><th>状態</th></tr></thead>
-    <tbody>${state.matches.map(m=>{
+    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
+    <tbody>${list.map(m=>{
       const closed = m.status==="closed" || m.deadline<=Date.now();
       return `<tr>
         <td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
         <td class="num amb" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
         <td><div class="pool" style="min-width:220px" data-pool="${m.id}">${poolHTML(m)}</div></td>
         <td class="num hide-m" data-pbets="${m.id}">${m.pool.bets}件</td>
-        <td class="num" style="line-height:1.5" data-upnl="${m.id}">${upnlHTML(m)}</td>
         <td>${m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}</td>
       </tr>`;
     }).join("")}</tbody></table></div>`;
@@ -2222,22 +2228,20 @@ function renderBet(){
       return;
     }
     el.innerHTML = `
-      <h2 class="sec"><span class="live"></span>試合速報 — ベット受付は終了・結果確定後に自動精算</h2>
-      ${liveTable(true)}
-      <h2 class="sec"><span class="live"></span>試合別 ユニオン損益 — 一目でわかる差異と精算</h2>
+      <h2 class="sec"><span class="live"></span>試合速報・ユニオン損益 — 試合ごとの差異と精算を一目で</h2>
       ${unionPnlCards()}
       <h2 class="sec">試合・ハンデ管理（ナイター）— タップして編集</h2>
       ${hcapTable()}
-      <h2 class="sec"><span class="live"></span>試合別 予想ポイント（リアルタイム）</h2>
-      ${poolTable()}`;
+      <h2 class="sec"><span class="live"></span>受付中の試合 予想ポイント（リアルタイム）</h2>
+      ${poolTable(true)}`;
   }
   if(state.role==="admin"){
     el.innerHTML = `
       <h2 class="sec"><span class="live"></span>試合速報</h2>
       ${liveTable()}
-      <h2 class="sec">東京セントラルユニオンの予想プール（監視ビュー）</h2>
-      ${poolTable()}
-      <p class="hint">運営はベット内容の閲覧のみ可能。ハンデ・締切の設定は各ユニオン管理者が行います。</p>`;
+      <h2 class="sec">東京セントラルユニオンの受付中プール（監視ビュー）</h2>
+      ${poolTable(true)}
+      <p class="hint">運営はベット内容の閲覧のみ可能。ハンデ・締切の設定は各ユニオン管理者が行います。試合中・終了分のプールは上の試合速報に表示されます。</p>`;
   }
 }
 
@@ -2836,7 +2840,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.6.1-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.0-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
