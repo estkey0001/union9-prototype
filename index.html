@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.6.0
+      UIプロトタイプ v0.6.1
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.6.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.6.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -705,7 +705,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.6.0：ユニオン管理のベット／データページに試合別損益（差し引き・レーキ・レーキバックの内訳付き）を追加しました"},
+    {d:"8/28", t:"v0.6.1：試合別損益のレーキバックを勝ち側＋負け側の両方から算出するよう修正しました"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1040,7 +1040,8 @@ function finalize(m){
 }
 /* 試合別のユニオン損益（1試合ずつの精算式）
    差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）
-   レーキ＝勝ち分×手数料率／レーキバック＝レーキ×エージェントバック率
+   レーキ＝勝ち分×手数料率
+   レーキバック＝勝ち負け両方に発生：（勝ち分＋没収分）×手数料率×エージェントバック率
    ユニオン損益＝差し引き＋レーキ−レーキバック（勝負無しはすべて0） */
 function unionMatchPnl(m){
   if(m.status!=="live" && m.status!=="final") return null;
@@ -1054,9 +1055,11 @@ function unionMatchPnl(m){
   const loseAmt = Math.round(losePool*abs/10);            // 負け側から受け入れる没収分
   const diff = loseAmt - winAmt;                          // 差し引き
   const rake = Math.round(winAmt*state.feeRate/100);      // レーキ（勝ち分の手数料）
-  const back = Math.round(rake*state.agentBackRate/100);  // レーキバック（レーキ×バック率）
+  const backWin  = Math.round(winAmt*state.feeRate/100*state.agentBackRate/100);   // バック：勝ち側分
+  const backLose = Math.round(loseAmt*state.feeRate/100*state.agentBackRate/100);  // バック：負け側分（受入からも発生）
+  const back = backWin + backLose;                        // レーキバック合計
   const net  = diff + rake - back;                        // ユニオン損益
-  return {out, fracA, winSide, loseSide, winPool, losePool, winAmt, loseAmt, diff, rake, back, net};
+  return {out, fracA, winSide, loseSide, winPool, losePool, winAmt, loseAmt, diff, rake, backWin, backLose, back, net};
 }
 function upnlHTML(m){
   const c = unionMatchPnl(m);
@@ -1084,7 +1087,7 @@ function upnlBoxHTML(m){
   }
   return head + `
     <div style="margin-top:6px;font-size:13px">${liveJudge(m)}のため ユニオンは <b class="num ${c.net>=0?"pos":"neg"}" style="font-size:17px">${sign(c.net)}P</b>${fin?"":"（見込み）"}</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:2px">内訳：差し引き ${sign(c.diff)}P（受入 ${yen(c.loseAmt)} − 支払 ${yen(c.winAmt)}）＋ レーキ ${yen(c.rake)}P − レーキバック ${yen(c.back)}P</div>`;
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">内訳：差し引き ${sign(c.diff)}P（受入 ${yen(c.loseAmt)} − 支払 ${yen(c.winAmt)}）＋ レーキ ${yen(c.rake)}P − レーキバック ${yen(c.back)}P（勝ち側 ${yen(c.backWin)}＋負け側 ${yen(c.backLose)}）</div>`;
 }
 function unionPnlCards(){
   const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
@@ -1113,7 +1116,7 @@ function upnlRecBodyHTML(m){
          row(`${esc(c.loseSide)}（負け側）`, yen(c.losePool)+"P") +
          row("差し引き（受入 − 支払）", sign(c.diff)+"P", c.diff>=0?"pos":"neg") +
          row(`レーキ（勝ち分の${state.feeRate.toFixed(0)}%）`, "+"+yen(c.rake)+"P", "amb") +
-         row(`レーキバック（レーキの${state.agentBackRate}%）`, "−"+yen(c.back)+"P") +
+         row(`レーキバック（勝ち側 ${yen(c.backWin)}＋負け側 ${yen(c.backLose)}）`, "−"+yen(c.back)+"P") +
          row("ユニオン", sign(c.net)+"P", c.net>=0?"pos":"neg");
 }
 function unionPnlRecords(){
@@ -1133,7 +1136,7 @@ function unionPnlRecords(){
       <div data-upnlrec="${m.id}">${upnlRecBodyHTML(m)}</div>
     </div>`;
   }).join("")}</div>
-  <p class="hint">差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）。レーキ＝勝ち分×手数料率。レーキバック＝レーキ×エージェントバック率（現在 ${state.agentBackRate}%）。<b>分勝ち・分負けは該当割合（k分＝k×10%）のみ</b>が精算対象、勝負無しは全額返還で損益0です。</p>`;
+  <p class="hint">差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）。レーキ＝勝ち分×手数料率。レーキバック＝<b>勝ち負け両方に発生</b>：（勝ち分＋没収分）×手数料率×エージェントバック率（現在 ${state.agentBackRate}%）。<b>分勝ち・分負けは該当割合（k分＝k×10%）のみ</b>が精算対象、勝負無しは全額返還で損益0です。</p>`;
 }
 function finLabel(m){
   return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
@@ -2833,7 +2836,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.6.0-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.6.1-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
