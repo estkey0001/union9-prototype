@@ -77,6 +77,8 @@
   }
   .bal-chip .n{font-family:var(--disp);font-size:17px;font-weight:600;color:var(--amber);font-variant-numeric:tabular-nums}
   .bal-chip small{font-size:10px;color:var(--muted);letter-spacing:.08em}
+  .shopbtn{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid rgba(240,185,75,.5);border-radius:99px;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--amber);cursor:pointer}
+  .shopbtn:hover{background:rgba(240,185,75,.1);border-color:var(--amber)}
   .roleswitch{display:flex;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px}
   .roleswitch button{border:0;background:transparent;color:var(--muted);padding:5px 11px;border-radius:6px;font-size:11px;font-weight:700}
   .roleswitch button.on{background:var(--surface2);color:var(--amber)}
@@ -296,6 +298,8 @@
     .union-chip .ava{width:22px;height:22px;font-size:12px}
     .bal-chip{padding:5px 12px}
     .bal-chip .n{font-size:14px}
+    .shopbtn{padding:5px 10px}
+    .shopbtn-t{display:none}
     .demo-tag{display:none}
     .uni-card{padding:11px 12px}
     .uni-card .nm{font-size:13px}
@@ -355,7 +359,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.6
+      UIプロトタイプ v0.8.0
     </div>
   </aside>
 
@@ -363,6 +367,7 @@
     <header class="bar">
       <div class="union-chip"><span class="ava">⚾</span><span id="tb-union">東京セントラルユニオン</span><small id="tb-uid">#482913</small></div>
       <div class="bal-chip"><span class="n" id="tb-bal">0</span><small>P</small><small id="tb-bal-l">保有</small></div>
+      <button class="shopbtn open-shop" id="shop-btn" title="ショップ — アプリ内課金">🏆<span class="shopbtn-t">ショップ</span></button>
       <span class="demo-tag">デモ：ロール切替 →</span>
       <div class="roleswitch" id="roleswitch">
         <button data-role="user" class="on">ユーザー</button>
@@ -459,7 +464,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.6 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.8.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -505,6 +510,16 @@
     </table></div>
     <p class="hint">「半」は分けの無い明確なライン（例: 1半＝1点差までは丸負け、2点差から丸勝ち）。2以上のハンデも同じ法則で続きます。レーキ（手数料）はこの表の計算外で、勝ち分にのみ適用されます。</p>
     <div class="actions"><button class="btn primary" id="hande-close">閉じる</button></div>
+  </div>
+</div>
+
+<!-- ショップモーダル（全ロール共通・アプリ内課金） -->
+<div class="overlay" id="shop-overlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="shop-title">
+    <h3 id="shop-title">🏆 ショップ</h3>
+    <div class="mh">アイテムを購入し、ゲーム内でポイントに交換できます（決済は App Store／Google Play のアプリ内課金のみ）</div>
+    <div id="shop-body"></div>
+    <div class="actions"><button class="btn primary" id="shop-close">閉じる</button></div>
   </div>
 </div>
 
@@ -681,7 +696,7 @@ const state = {
     {id:"gbat",   name:"金のバット", icon:"🌟", jpy:16000, pts:100000},
     {id:"trophy", name:"トロフィー", icon:"🏆", jpy:80000, pts:500000},
   ],
-  inventory: {ball:2, glove:0, bat:1, gbat:0, trophy:0},
+  inventory: { user:{}, agent:{}, union:{ball:2, glove:0, bat:1, gbat:0, trophy:0} },  // ロール別インベントリ（全ユーザーが課金可能）
   iap:  [{dt:"8/25 11:02", union:"東京セントラルユニオン", name:"トロフィー", icon:"🏆", qty:2, jpy:160000}],
   exch: [{dt:"8/25 11:05", union:"東京セントラルユニオン", name:"トロフィー", icon:"🏆", qty:2, pts:1000000}],
   payouts: [
@@ -708,7 +723,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.6：ルール説明を整形・不要な説明文を削除・運営の監視画面をユニオン管理と同じカードUIに刷新しました"},
+    {d:"8/28", t:"v0.8.0：画面上部に 🏆 ショップを新設。すべてのユーザーがアプリ内課金でアイテムを購入しポイントに交換できます"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -780,7 +795,14 @@ function loadState(){
     SAVE_FIELDS.forEach(k=>{ if(d[k]!==undefined) state[k]=d[k]; });
     if(d.us) state.us = {...state.us, ...d.us};
     if(d.as) state.as = {...state.as, ...d.as};
-    if(d.inventory) state.inventory = {...state.inventory, ...d.inventory};
+    if(d.inventory){
+      if(typeof Object.values(d.inventory)[0] === "number"){
+        // 旧形式（フラット＝ユニオンのみ）からロール別へ移行
+        state.inventory = {user:{}, agent:{}, union:{...d.inventory}};
+      } else {
+        state.inventory = {user:{}, agent:{}, union:{}, ...d.inventory};
+      }
+    }
     if(d.prefs) state.prefs = {...state.prefs, ...d.prefs};
     if(d.ag) state.ag = {...state.ag, ...d.ag};
     if(d.itemsCatalog) state.itemsCatalog = d.itemsCatalog;
@@ -1837,7 +1859,7 @@ function renderHome(){
         <div class="stat"><div class="l">ハンデ・締切の設定</div><div class="sub" style="margin:6px 0 10px">本日の6試合を管理</div><button class="btn small primary" data-goto="bet">ベット管理へ</button></div>
         <div class="stat"><div class="l">リクエスト承認</div><div class="sub" style="margin:6px 0 10px">${pend.unionReq}件の承認待ち</div><button class="btn small primary" data-goto="cashier">キャッシャーへ</button></div>
         <div class="stat"><div class="l">参加申請</div><div class="sub" style="margin:6px 0 10px">${pend.join}件の申請あり</div><button class="btn small primary" data-goto="members">メンバーへ</button></div>
-        <div class="stat"><div class="l">ポイント購入</div><div class="sub" style="margin:6px 0 10px">アイテムを買って交換</div><button class="btn small primary" data-goto="cashier">ショップへ</button></div>
+        <div class="stat"><div class="l">ポイント購入</div><div class="sub" style="margin:6px 0 10px">アイテムを買って交換</div><button class="btn small primary open-shop">🏆 ショップを開く</button></div>
       </div>
       ${newsHTML}`;
   }
@@ -2448,7 +2470,9 @@ function renderCashier(){
           <td>${t.dir==="send"?'<span class="pill win">受取</span>':'<span class="pill pend">回収</span>'}</td>
           <td class="num">${yen(t.amt)}P</td></tr>`).join("")
           : '<tr><td colspan="4" class="empty">まだ履歴はありません</td></tr>'}</tbody>
-      </table></div>`;
+      </table></div>
+      <h2 class="sec">ポイント購入</h2>
+      ${shopLinkPanel()}`;
   }
   if(state.role==="agent"){
     const hist = state.transfers.filter(t=>t.actor==="agent");
@@ -2517,7 +2541,9 @@ function renderCashier(){
           return `<tr><td>${r.p}</td><td class="num">${yen(r.vol)}P</td>
             <td class="num">${state.agentBackRate}%</td><td class="num amb">${yen(back)}P</td>
             <td>${r.claimed?'<span class="pill win">受取済</span>':`<button class="btn small primary" data-claim="${i}">受け取る</button>`}</td></tr>`;
-        }).join("")}</tbody></table></div>`;
+        }).join("")}</tbody></table></div>
+      <h2 class="sec">ポイント購入</h2>
+      ${shopLinkPanel()}`;
   }
   if(state.role==="union"){
     const hist = state.transfers.filter(t=>t.actor==="union");
@@ -2565,44 +2591,14 @@ function renderCashier(){
           </table>
         </div>
       </div>
-      <h2 class="sec">ポイント購入 — アプリ内課金アイテムをポイントに交換</h2>
-      <div class="grid2">
-        <div class="panel">
-          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:8px">アイテムショップ（アプリ内課金）</div>
-          <div class="tblwrap"><table>
-            <thead><tr><th>アイテム</th><th>価格</th><th>交換ポイント</th><th></th></tr></thead>
-            <tbody>${state.itemsCatalog.map(it=>`
-              <tr><td>${it.icon} <strong>${it.name}</strong></td>
-              <td class="num">¥${yen(it.jpy)}</td>
-              <td class="num amb">${yen(it.pts)}P</td>
-              <td><button class="btn small primary" data-iapbuy="${it.id}">購入</button></td></tr>`).join("")}</tbody>
-          </table></div>
-          <p class="hint">決済は App Store／Google Play の<b>アプリ内課金のみ</b>（クレジットカード直接決済・現金振込はありません）。アイテムはゲーム内でポイントに交換でき、交換後の払戻し・返金はできません（<a href="#" class="link open-terms">利用規約</a>）。</p>
-        </div>
-        <div class="panel">
-          <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:8px">インベントリ — タップでポイントに交換</div>
-          <div class="tblwrap"><table>
-            <thead><tr><th>アイテム</th><th>所持</th><th>交換ポイント</th><th></th></tr></thead>
-            <tbody>${state.itemsCatalog.map(it=>`
-              <tr><td>${it.icon} <strong>${it.name}</strong></td>
-              <td class="num">${state.inventory[it.id]||0}個</td>
-              <td class="num amb">${yen(it.pts)}P</td>
-              <td><button class="btn small" data-iapexch="${it.id}" ${!(state.inventory[it.id]>0)?"disabled":""}>交換する</button></td></tr>`).join("")}</tbody>
-          </table></div>
-          <div class="tblwrap" style="margin-top:12px"><table>
-            <thead><tr><th>日時</th><th>内容</th><th>増減</th></tr></thead>
-            <tbody>${[...state.exch.map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} をポイントに交換`, v:`+${yen(x.pts)}P`, c:"pos"})),
-                      ...state.iap.map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} を購入（アプリ内課金）`, v:`¥${yen(x.jpy)}`, c:""}))].slice(0,8).map(row=>`
-              <tr><td class="num">${esc(row.dt)}</td><td style="white-space:normal">${row.body}</td><td class="num ${row.c}">${row.v}</td></tr>`).join("")}</tbody>
-          </table></div>
-        </div>
-      </div>`;
+      <h2 class="sec">ポイント購入</h2>
+      ${shopLinkPanel()}`;
   }
   if(state.role==="admin"){
     el.innerHTML = `
-      <h2 class="sec">アプリ内課金・ポイント交換ログ（全ユニオン）</h2>
+      <h2 class="sec">アプリ内課金・ポイント交換ログ（全ユーザー）</h2>
       <div class="panel tblwrap"><table>
-        <thead><tr><th>日時</th><th>ユニオン</th><th>内容</th><th>金額／ポイント</th></tr></thead>
+        <thead><tr><th>日時</th><th>購入者</th><th>内容</th><th>金額／ポイント</th></tr></thead>
         <tbody>${[...state.exch.map(x=>({dt:x.dt, u:x.union, body:`${x.icon}${x.name}×${x.qty} をポイントに交換`, v:`+${yen(x.pts)}P`, c:"amb"})),
                   ...state.iap.map(x=>({dt:x.dt, u:x.union, body:`${x.icon}${x.name}×${x.qty} 購入（IAP売上）`, v:`¥${yen(x.jpy)}`, c:"pos"}))].map(row=>`
           <tr><td class="num">${esc(row.dt)}</td><td><strong>${esc(row.u)}</strong></td>
@@ -2890,7 +2886,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.6-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.8.0-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
@@ -2903,6 +2899,58 @@ function renderSettings(){
     </div>`;
 }
 
+/* ================= ショップ（全ロール共通・アプリ内課金） ================= */
+function shopRole(){ return state.role==="admin" ? null : state.role; }
+function invOf(){
+  const r = shopRole(); if(!r) return {};
+  state.inventory[r] = state.inventory[r] || {};
+  return state.inventory[r];
+}
+function buyerLabel(){
+  return {user:(state.profile?.name||"demo_user"), agent:"田中エージェント", union:"東京セントラルユニオン"}[state.role] || "運営";
+}
+function renderShop(){
+  const inv = invOf();
+  $("#shop-body").innerHTML = `
+    <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin:6px 0">アイテムショップ</div>
+    <div class="tblwrap"><table>
+      <thead><tr><th>アイテム</th><th>価格</th><th>交換ポイント</th><th></th></tr></thead>
+      <tbody>${state.itemsCatalog.map(it=>`
+        <tr><td>${it.icon} <strong>${it.name}</strong></td>
+        <td class="num">¥${yen(it.jpy)}</td>
+        <td class="num amb">${yen(it.pts)}P</td>
+        <td><button class="btn small primary" data-iapbuy="${it.id}">購入</button></td></tr>`).join("")}</tbody>
+    </table></div>
+    <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin:14px 0 6px">インベントリ — 交換でポイントに</div>
+    <div class="tblwrap"><table>
+      <thead><tr><th>アイテム</th><th>所持</th><th>交換ポイント</th><th></th></tr></thead>
+      <tbody>${state.itemsCatalog.map(it=>`
+        <tr><td>${it.icon} <strong>${it.name}</strong></td>
+        <td class="num">${inv[it.id]||0}個</td>
+        <td class="num amb">${yen(it.pts)}P</td>
+        <td><button class="btn small" data-iapexch="${it.id}" ${!(inv[it.id]>0)?"disabled":""}>交換する</button></td></tr>`).join("")}</tbody>
+    </table></div>
+    ${(()=>{
+      const my = x => x.union===buyerLabel();
+      const rows = [...state.exch.filter(my).map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} をポイントに交換`, v:`+${yen(x.pts)}P`, c:"pos"})),
+                    ...state.iap.filter(my).map(x=>({dt:x.dt, body:`${x.icon}${x.name}×${x.qty} を購入`, v:`¥${yen(x.jpy)}`, c:""}))].slice(0,6);
+      return rows.length? `
+      <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin:14px 0 6px">あなたの購入・交換履歴</div>
+      <div class="tblwrap"><table><tbody>${rows.map(r=>`
+        <tr><td class="num">${esc(r.dt)}</td><td style="white-space:normal">${r.body}</td><td class="num ${r.c}">${r.v}</td></tr>`).join("")}</tbody></table></div>` : "";
+    })()}
+    <p class="hint">交換したポイントは <b>${esc(buyerLabel())}</b> の残高に加算されます。交換後の払戻し・返金はできません（<a href="#" class="link open-terms">利用規約</a>）。</p>`;
+}
+/* キャッシャー各所からショップへ誘導する共通パネル */
+function shopLinkPanel(){
+  return `<div class="panel"><div class="inline" style="align-items:center">
+    <span style="font-size:12.5px;color:var(--muted);flex:1;min-width:200px">アイテムの購入・ポイント交換は、画面上部の <b class="amb">🏆 ショップ</b> からいつでも行えます（アプリ内課金のみ・全ユーザー共通）。</span>
+    <button class="btn primary open-shop">🏆 ショップを開く</button>
+  </div></div>`;
+}
+$("#shop-close").addEventListener("click", ()=>$("#shop-overlay").classList.remove("show"));
+$("#shop-overlay").addEventListener("click", e=>{ if(e.target.id==="shop-overlay") $("#shop-overlay").classList.remove("show"); });
+
 /* ================= レンダリング統括 ================= */
 function renderTopbar(){
   const label = {user:"保有", agent:"保有", union:"ユニオン", admin:"運営"}[state.role];
@@ -2911,6 +2959,7 @@ function renderTopbar(){
   $("#tb-bal-l").textContent = label;
   $("#tb-union").textContent = state.role==="admin"? "運営コンソール" : "東京セントラルユニオン";
   $("#tb-uid").textContent = state.role==="admin"? "" : "#482913";
+  $("#shop-btn").style.display = state.role==="admin"? "none" : "flex";   // 運営は課金しない
 }
 function renderPage(){
   renderTopbar();
@@ -3316,27 +3365,40 @@ document.addEventListener("click", e=>{
     toast(`${name} ${dir==="send"?"へ":"から"} ${yen(amt)}P を${dir==="send"?"送付":"回収"}しました`);
     return;
   }
-  // ユニオン：アイテム購入（アプリ内課金モック）
+  // ショップを開く（全ロール共通・トップバー🏆やショートカットから）
+  if(e.target.closest(".open-shop")){
+    e.preventDefault();
+    renderShop();
+    $("#shop-overlay").classList.add("show");
+    return;
+  }
+  // アイテム購入（アプリ内課金モック・現在のロールのインベントリへ）
   const ib = e.target.closest("[data-iapbuy]");
   if(ib){
+    if(!shopRole()) return;
     const it = state.itemsCatalog.find(x=>x.id===ib.dataset.iapbuy);
-    state.inventory[it.id] = (state.inventory[it.id]||0)+1;
-    state.iap.unshift({dt:nowStr(), union:"東京セントラルユニオン", name:it.name, icon:it.icon, qty:1, jpy:it.jpy});
+    const inv = invOf();
+    inv[it.id] = (inv[it.id]||0)+1;
+    state.iap.unshift({dt:nowStr(), union:buyerLabel(), name:it.name, icon:it.icon, qty:1, jpy:it.jpy});
+    if($("#shop-overlay").classList.contains("show")) renderShop();
     rerender();
     toast(`（アプリ内課金モック）${it.name}を購入しました。インベントリから交換できます`);
     return;
   }
-  // ユニオン：アイテム→ポイント交換
+  // アイテム→ポイント交換（現在のロールの残高へ加算）
   const ix = e.target.closest("[data-iapexch]");
   if(ix){
+    const r = shopRole(); if(!r) return;
     const it = state.itemsCatalog.find(x=>x.id===ix.dataset.iapexch);
-    if(!(state.inventory[it.id]>0)) return;
-    state.inventory[it.id]--;
-    state.wallets.union += it.pts;
-    state.exch.unshift({dt:nowStr(), union:"東京セントラルユニオン", name:it.name, icon:it.icon, qty:1, pts:it.pts});
-    state.log.unshift({dt:nowStr(), type:"交換", body:`東京セントラルユニオン：${it.name}×1 を ${yen(it.pts)}P に交換（アプリ内課金アイテム）`});
+    const inv = invOf();
+    if(!(inv[it.id]>0)) return;
+    inv[it.id]--;
+    state.wallets[r] += it.pts;
+    state.exch.unshift({dt:nowStr(), union:buyerLabel(), name:it.name, icon:it.icon, qty:1, pts:it.pts});
+    state.log.unshift({dt:nowStr(), type:"交換", body:`${buyerLabel()}：${it.name}×1 を ${yen(it.pts)}P に交換（アプリ内課金アイテム）`});
+    if($("#shop-overlay").classList.contains("show")) renderShop();
     rerender();
-    toast(`${it.name}を ${yen(it.pts)}P に交換しました`);
+    toast(`${it.name}を ${yen(it.pts)}P に交換しました（${buyerLabel()}の残高へ）`);
     return;
   }
   // 運営：発行
