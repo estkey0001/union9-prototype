@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.2
+      UIプロトタイプ v0.7.3
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.2 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.3 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -706,7 +706,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.2：ユーザー画面の表示を整理（速報はハンデ判定を非表示・ベット中の試合は予想収益を表示・終了試合は結果のみ）"},
+    {d:"8/28", t:"v0.7.3：ユニオン管理を整理（予想ポイント表の行タップでハンデ・締切を編集／損益カードのレイアウトを刷新）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1078,18 +1078,23 @@ function upnlBoxHTML(m){
   if(!c) return "";
   const fin = m.status==="final";
   const pd = m.pool.a - m.pool.h;
-  const head = `
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;flex-wrap:wrap">
-      <span><b>${esc(m.away)}</b>${m.hcapSide===m.away?` <span class="amb">出し ${esc(m.hcap)}</span>`:""}　<b class="num">${yen(m.pool.a)}P</b></span>
-      <span><b>${esc(m.home)}</b>${m.hcapSide===m.home?` <span class="amb">出し ${esc(m.hcap)}</span>`:""}　<b class="num">${yen(m.pool.h)}P</b></span>
+  const bar = `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`;
+  const judgeLine = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:12px;flex-wrap:wrap">
+      <span>${fin?"結果":"判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
       <span style="color:var(--muted)">差異 <b class="num" style="color:var(--text)">${yen(Math.abs(pd))}P</b>（${pd>=0? esc(m.away): esc(m.home)}側が多い）</span>
     </div>`;
   if(c.out===0){
-    return head + `<div class="hint" style="margin-top:6px">${liveJudge(m)} — ユニオン損益 <b>±0P</b>（全ベット返還・レーキなし）</div>`;
+    return bar + judgeLine + `<div class="hint" style="margin-top:8px">勝負無しのため全ベット返還 — ユニオン損益 <b>±0P</b>（レーキ・レーキバックなし）</div>`;
   }
-  return head + `
-    <div style="margin-top:6px;font-size:13px">${liveJudge(m)}のため ユニオンは <b class="num ${c.net>=0?"pos":"neg"}" style="font-size:17px">${sign(c.net)}P</b>${fin?"":"（見込み）"}</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:2px">内訳：差し引き ${sign(c.diff)}P（受入 ${yen(c.loseAmt)} − 支払 ${yen(c.winAmt)}）＋ レーキ ${yen(c.rake)}P − レーキバック ${yen(c.back)}P（勝ち側 ${yen(c.backWin)}＋負け側 ${yen(c.backLose)}）</div>`;
+  const box = (k,v,cls="") => `<div><div class="k">${k}</div><div class="n ${cls}">${v}</div></div>`;
+  return bar + judgeLine + `
+    <div class="pstats" style="margin:10px 0 0">
+      ${box("差し引き", sign(c.diff)+"P", c.diff>=0?"pos":"neg")}
+      ${box("レーキ", "+"+yen(c.rake)+"P", "amb")}
+      ${box("レーキバック", "−"+yen(c.back)+"P")}
+      ${box(`ユニオン損益${fin?"":"（見込み）"}`, sign(c.net)+"P", c.net>=0?"pos":"neg")}
+    </div>`;
 }
 function unionPnlCards(){
   const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
@@ -1097,19 +1102,22 @@ function unionPnlCards(){
   return `<div class="uni-list">${list.map(m=>{
     const fin = m.status==="final";
     return `
-    <div class="panel" style="padding:12px 14px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:7px">
+    <div class="panel" style="padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
         ${fin? '<span class="pill closed">試合終了・精算済</span>':'<span class="livepill">LIVE</span>'}
         <span class="pill">${m.lg}</span>
-        <strong style="color:var(--text);font-size:13px">${esc(m.away)} - ${esc(m.home)}</strong>
-        <span class="num amb" style="font-size:15px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
-        <span data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
-        <span>・${m.ext?"延長あり":"9回打切"}</span>
+        <span class="inning" data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
+        <span>・ハンデ ${esc(m.hcapSide)} ${esc(m.hcap)}・${m.ext?"延長あり":"9回打切"}</span>
         ${fin? "" : `<button class="btn small primary" style="margin-left:auto" data-final="${m.id}">結果確定</button>`}
+      </div>
+      <div class="scorebox">
+        <span class="s-team">${esc(m.away)}</span>
+        <span class="s-score" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span class="s-team">${esc(m.home)}</span>
       </div>
       <div data-upnlbox="${m.id}">${upnlBoxHTML(m)}</div>
     </div>`;}).join("")}</div>
-  <p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ表判定→自動精算（配当支払・手数料徴収・返還）を実行します。9回裏終了（延長は決着時）は自動確定。1試合ずつの精算記録は<b>データページ</b>に残ります。</p>`;
+  <p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ表判定→自動精算を実行します（9回裏終了・延長決着時は自動確定）。受入・支払やレーキバックの勝ち負け内訳は<b>データページ → 試合別 損益記録</b>で確認できます。</p>`;
 }
 /* データページ（ユニオン管理）：1試合ずつの精算記録 */
 function upnlRecBodyHTML(m){
@@ -1344,41 +1352,24 @@ function matchCards(interactive, league){
     </div>`;
   }).join("")}</div>`;
 }
-function poolTable(openOnly){
+function poolTable(openOnly, editable){
   const list = openOnly ? state.matches.filter(m=>m.status!=="live" && m.status!=="final") : state.matches;
   if(!list.length) return '<div class="panel empty">受付中の試合はありません</div>';
   return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
+    <thead><tr><th>試合</th>${editable?"<th>ハンデ</th>":""}<th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th>${editable?"<th></th>":""}</tr></thead>
     <tbody>${list.map(m=>{
       const closed = m.status==="closed" || m.deadline<=Date.now();
-      return `<tr>
+      return `<tr${editable?` class="click" data-ematch="${m.id}"`:""}>
         <td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
+        ${editable?`<td style="line-height:1.4"><b class="amb">${esc(m.hcapSide)} ${esc(m.hcap)}</b><br><span style="font-size:10px;color:var(--muted)">${m.ext?"延長あり":"9回打切"}</span></td>`:""}
         <td class="num amb" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
         <td><div class="pool" style="min-width:220px" data-pool="${m.id}">${poolHTML(m)}</div></td>
         <td class="num hide-m" data-pbets="${m.id}">${m.pool.bets}件</td>
         <td>${m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}</td>
+        ${editable?'<td style="color:var(--muted)">→</td>':""}
       </tr>`;
-    }).join("")}</tbody></table></div>`;
-}
-function hcapTable(){
-  // 受付中の試合リスト（タップで編集ページへ）
-  const list = state.matches.filter(m=>m.status!=="live" && m.status!=="final");
-  return `<div class="uni-list">${list.map(m=>{
-    const closed = m.status==="closed" || m.deadline<=Date.now();
-    const dl = new Date(m.deadline);
-    const hm = `${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
-    return `
-    <div class="uni-card click" data-ematch="${m.id}">
-      <div class="ava" style="font-size:11px;font-weight:900">${m.lg}</div>
-      <div class="info">
-        <div class="nm">${esc(m.away)} - ${esc(m.home)} <span style="color:var(--muted);font-weight:400;font-size:11px">${m.start}</span></div>
-        <div class="meta2">出し <b class="amb">${esc(m.hcapSide)} ${m.hcap}</b>・${m.ext?"延長あり":"9回打切"}・締切 ${hm}</div>
-      </div>
-      ${closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}
-      <span class="arrow">→</span>
-    </div>`;
-  }).join("")}</div>
-  <p class="hint">タップでハンデ・延長・締切を編集（<a href="#" class="link open-hande">ハンデ表を見る</a>）。変更は即座に全ユーザーへ反映されます。</p>`;
+    }).join("")}</tbody></table>
+    ${editable?'<p class="hint">行をタップでハンデ・延長・締切の編集ページへ（<a href="#" class="link open-hande">ハンデ表</a>）。変更は即座に全ユーザーのベット画面へ反映されます。</p>':""}</div>`;
 }
 /* 試合の編集ページ（ユニオン管理） */
 function matchEditHTML(){
@@ -2302,10 +2293,8 @@ function renderBet(){
     el.innerHTML = `
       <h2 class="sec"><span class="live"></span>試合速報・ユニオン損益 — 試合ごとの差異と精算を一目で</h2>
       ${unionPnlCards()}
-      <h2 class="sec">試合・ハンデ管理（ナイター）— タップして編集</h2>
-      ${hcapTable()}
-      <h2 class="sec"><span class="live"></span>受付中の試合 予想ポイント（リアルタイム）</h2>
-      ${poolTable(true)}`;
+      <h2 class="sec"><span class="live"></span>受付中の試合 予想ポイント（リアルタイム）— タップでハンデ・締切を設定</h2>
+      ${poolTable(true, true)}`;
   }
   if(state.role==="admin"){
     el.innerHTML = `
@@ -2920,7 +2909,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.2-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.3-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
