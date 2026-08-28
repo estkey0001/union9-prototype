@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.0
+      UIプロトタイプ v0.7.1
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -569,6 +569,7 @@ const state = {
   periodKey: "7",
   period: null,
   memberDetail: null,   // 詳細表示中のメンバー名（ユニオン管理・エージェント・運営）
+  pnlDetail: null,      // ユニオン：詳細表示中の試合別損益（試合id）
   agentDetail: null,    // 詳細表示中のエージェント名（ユニオン・運営）
   adminUnion: null,     // 運営：詳細表示中のユニオン名
   detailCtx: null,      // 詳細参照中のユニオン（null＝東京セントラル＝実データ）
@@ -705,7 +706,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.0：ユニオン管理のベットページを整理（試合速報と損益を1カードに統合・予想ポイント表は受付中の試合のみに）"},
+    {d:"8/28", t:"v0.7.1：データページの試合別損益記録をコンパクトな一覧に変更（タップで精算内訳の詳細ページへ）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -867,6 +868,7 @@ function go(page){
 function setRole(r){
   state.role = r;
   state.memberDetail = null;
+  state.pnlDetail = null;
   state.agentDetail = null;
   state.adminUnion = null;
   state.detailCtx = null;
@@ -1128,20 +1130,48 @@ function unionPnlRecords(){
   const list = [...state.matches.filter(m=>m.status==="final"), ...state.matches.filter(m=>m.status==="live")];
   if(!list.length) return '<div class="panel empty">記録対象の試合はありません（結果確定後にここへ1試合ずつ記録されます）</div>';
   return `<div class="uni-list">${list.map(m=>{
+    const c = unionMatchPnl(m);
     const fin = m.status==="final";
     return `
-    <div class="panel" style="padding:12px 14px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:6px">
-        ${fin? '<span class="pill closed">精算済</span>':'<span class="pill stop">試合中・見込み</span>'}
-        <span class="pill">${m.lg}</span>
-        <strong style="color:var(--text);font-size:13px">${esc(m.away)} - ${esc(m.home)}</strong>
-        <span class="num" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
-        <span>出し ${esc(m.hcapSide)} ${esc(m.hcap)}・<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
+    <div class="uni-card click" data-pnld="${m.id}">
+      <div class="ava" style="font-size:11px;font-weight:900">${m.lg}</div>
+      <div class="info">
+        <div class="nm">${esc(m.away)} - ${esc(m.home)} <span class="num amb" style="font-size:13px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span> ${fin?'<span class="pill closed">精算済</span>':'<span class="livepill">LIVE</span>'}</div>
+        <div class="meta2">出し ${esc(m.hcapSide)} ${esc(m.hcap)}・<span data-ljudge="${m.id}">${liveJudge(m)}</span></div>
       </div>
-      <div data-upnlrec="${m.id}">${upnlRecBodyHTML(m)}</div>
+      <span class="num ${c.net>=0?"pos":"neg"}" style="font-size:14px;text-align:right" data-upnlnet="${m.id}">${sign(c.net)}P${fin?"":"（見込み）"}</span>
+      <span class="arrow">→</span>
     </div>`;
   }).join("")}</div>
-  <p class="hint">差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）。レーキ＝勝ち分×手数料率。レーキバック＝<b>勝ち負け両方に発生</b>：（勝ち分＋没収分）×手数料率×エージェントバック率（現在 ${state.agentBackRate}%）。<b>分勝ち・分負けは該当割合（k分＝k×10%）のみ</b>が精算対象、勝負無しは全額返還で損益0です。</p>`;
+  <p class="hint">金額はユニオン損益（差し引き＋レーキ−レーキバック）。行をタップすると内訳の詳細ページが開きます。</p>`;
+}
+/* 損益記録の詳細ページ（1試合分の精算内訳） */
+function unionPnlDetailHTML(){
+  const m = state.matches.find(x=>x.id===state.pnlDetail);
+  if(!m || (m.status!=="live" && m.status!=="final")) return "";
+  const fin = m.status==="final";
+  return `
+    <h2 class="sec"><button class="btn small" data-pnlback>← 損益記録一覧</button> 試合別 損益詳細</h2>
+    <div class="panel" style="padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
+        ${fin? '<span class="pill closed">試合終了・精算済</span>':'<span class="livepill">LIVE</span>'}
+        <span class="pill">${m.lg}</span>
+        <span>${m.start} 開始・${m.ext?"延長あり":"9回打切"}</span>
+        <span class="inning" data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
+      </div>
+      <div class="scorebox">
+        <span class="s-team">${esc(m.away)}</span>
+        <span class="s-score" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span class="s-team">${esc(m.home)}</span>
+      </div>
+      <div class="hcap">ハンデ <b>${esc(m.hcapSide)} ${m.hcap}</b>・${fin?"結果":"判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></div>
+      <div class="pool" style="margin-top:10px" data-pool="${m.id}">${poolHTML(m)}</div>
+    </div>
+    <h2 class="sec">精算内訳${fin?"":"（リアルタイム見込み）"}</h2>
+    <div class="panel" style="padding:12px 16px">
+      <div data-upnlrec="${m.id}">${upnlRecBodyHTML(m)}</div>
+    </div>
+    <p class="hint">差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）。レーキ＝勝ち分×手数料率。レーキバック＝<b>勝ち負け両方に発生</b>：（勝ち分＋没収分）×手数料率×エージェントバック率（現在 ${state.agentBackRate}%）。<b>分勝ち・分負けは該当割合（k分＝k×10%）のみ</b>が精算対象、勝負無しは全額返還で損益0です。</p>`;
 }
 function finLabel(m){
   return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
@@ -1212,6 +1242,11 @@ function updateLive(){
     document.querySelectorAll(`[data-upnl="${m.id}"]`).forEach(el=>el.innerHTML=upnlHTML(m));
     document.querySelectorAll(`[data-upnlbox="${m.id}"]`).forEach(el=>el.innerHTML=upnlBoxHTML(m));
     document.querySelectorAll(`[data-upnlrec="${m.id}"]`).forEach(el=>el.innerHTML=upnlRecBodyHTML(m));
+    document.querySelectorAll(`[data-upnlnet="${m.id}"]`).forEach(el=>{
+      const c = unionMatchPnl(m); if(!c) return;
+      el.textContent = sign(c.net)+"P"+(m.status==="final"?"":"（見込み）");
+      el.classList.toggle("pos", c.net>=0); el.classList.toggle("neg", c.net<0);
+    });
   });
   // ユニオンホームの本日損益カード
   const fins = state.matches.filter(m=>m.status==="final").reduce((a,m)=>a+(unionMatchPnl(m)?.net||0),0);
@@ -2701,6 +2736,14 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
       el.innerHTML = agentDetailHTML();
       return;
     }
+    if(state.pnlDetail!==null){
+      const dm = state.matches.find(x=>x.id===state.pnlDetail);
+      if(dm && (dm.status==="live"||dm.status==="final")){
+        el.innerHTML = unionPnlDetailHTML();
+        return;
+      }
+      state.pnlDetail = null;   // 試合日リセット等で対象が消えたら一覧へ戻す
+    }
     const agentPay = state.agents.reduce((a,g)=>a+Math.round(g.vol*state.feeRate/100*g.back/100),0);
     el.innerHTML = `
       <div class="cards" style="margin-top:26px">
@@ -2709,7 +2752,7 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
         ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "リアルタイム")}
         ${card("今月ベット総額", yen(calc.unionVol())+"<small>P</small>", "エージェント配下の合計")}
       </div>
-      <h2 class="sec">試合別 損益記録 — 1試合ずつの精算内訳</h2>
+      <h2 class="sec">試合別 損益記録 — タップで精算内訳の詳細へ</h2>
       ${unionPnlRecords()}
       <h2 class="sec">エージェント別 支払サマリー（今月）— 行をタップで詳細ページへ</h2>
       <div class="panel tblwrap"><table>
@@ -2840,7 +2883,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.0-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.1-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
@@ -3089,6 +3132,10 @@ document.addEventListener("click", e=>{
   const em = e.target.closest("[data-ematch]");
   if(em && !e.target.closest("input,select,button")){ state.editMatch = +em.dataset.ematch; rerender(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-emback]")){ state.editMatch = null; rerender(); return; }
+  // 試合別損益の詳細（ユニオン管理・データページ）
+  const pd = e.target.closest("[data-pnld]");
+  if(pd){ state.pnlDetail = +pd.dataset.pnld; rerender(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-pnlback]")){ state.pnlDetail = null; rerender(); return; }
   // メンバー詳細（ユニオン管理・エージェント）
   const md = e.target.closest("[data-mdetail]");
   if(md){
