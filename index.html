@@ -355,7 +355,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.5
+      UIプロトタイプ v0.7.6
     </div>
   </aside>
 
@@ -459,7 +459,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.5 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.6 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -708,7 +708,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.5：ユニオン管理のベット画面をスマホ最適化（差異表記の削除・受付中の試合をカード式に）"},
+    {d:"8/28", t:"v0.7.6：ルール説明を整形・不要な説明文を削除・運営の監視画面をユニオン管理と同じカードUIに刷新しました"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1065,15 +1065,6 @@ function unionMatchPnl(m){
   const net  = diff + rake - back;                        // ユニオン損益
   return {out, fracA, winSide, loseSide, winPool, losePool, winAmt, loseAmt, diff, rake, backWin, backLose, back, net};
 }
-function upnlHTML(m){
-  const c = unionMatchPnl(m);
-  if(!c) return '<span style="color:var(--muted);font-size:11px">開始後に表示</span>';
-  if(c.out===0) return `<b>±0P</b><br><span style="font-size:10px;color:var(--muted)">勝負無し・全額返還</span>`;
-  if(m.status==="final"){
-    return `<b class="${c.net>=0?"pos":"neg"}">${sign(c.net)}P</b><br><span style="font-size:10px;color:var(--muted)">差引${sign(c.diff)}・レーキ+${yen(c.rake)}・バック−${yen(c.back)}</span>`;
-  }
-  return `<span style="color:var(--muted);font-size:10px">見込み</span> <b class="${c.net>=0?"pos":"neg"}">${sign(c.net)}P</b>`;
-}
 /* ベットページ（ユニオン管理）：試合ごとの損益を一目で */
 function upnlBoxHTML(m){
   const c = unionMatchPnl(m);
@@ -1091,8 +1082,8 @@ function upnlBoxHTML(m){
   }
   return bar + foot(`ユニオン損益${fin?"":"（見込み）"}`, sign(c.net)+"P", c.net>=0?"pos":"neg");
 }
-/* 受付中の試合（ユニオン管理）：カード式・タップで編集ページへ */
-function openMatchCards(){
+/* 受付中の試合：カード式（ユニオン管理＝タップで編集／運営＝閲覧のみ） */
+function openMatchCards(readOnly){
   const list = state.matches.filter(m=>m.status!=="live" && m.status!=="final");
   if(!list.length) return '<div class="panel empty">受付中の試合はありません</div>';
   return `<div class="uni-list">${list.map(m=>{
@@ -1100,13 +1091,13 @@ function openMatchCards(){
     const dl = new Date(m.deadline);
     const hm = `${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")}`;
     return `
-    <div class="panel click" data-ematch="${m.id}" style="padding:12px 14px">
+    <div class="panel${readOnly?"":" click"}"${readOnly?"":` data-ematch="${m.id}"`} style="padding:12px 14px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:7px">
         ${closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}
         <span class="pill">${m.lg}</span>
         <strong style="color:var(--text);font-size:13.5px">${esc(m.away)} - ${esc(m.home)}</strong>
         <span>${m.start} 開始</span>
-        <span class="arrow" style="margin-left:auto">→</span>
+        ${readOnly?"":'<span class="arrow" style="margin-left:auto">→</span>'}
       </div>
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
         <span>ハンデ <b class="amb">${esc(m.hcapSide)} ${esc(m.hcap)}</b>・${m.ext?"延長あり":"9回打切"}</span>
@@ -1114,10 +1105,9 @@ function openMatchCards(){
       </div>
       <div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>
     </div>`;
-  }).join("")}</div>
-  <p class="hint">カードをタップでハンデ・延長・締切の編集ページへ（<a href="#" class="link open-hande">ハンデ表</a>）。変更は即座に全ユーザーのベット画面へ反映されます。</p>`;
+  }).join("")}</div>`;
 }
-function unionPnlCards(){
+function unionPnlCards(readOnly){
   const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
   if(!list.length) return '<div class="panel empty">試合中・終了の試合はありません</div>';
   return `<div class="uni-list">${list.map(m=>{
@@ -1129,7 +1119,7 @@ function unionPnlCards(){
         <span class="pill">${m.lg}</span>
         <span class="inning" data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
         <span>・ハンデ ${esc(m.hcapSide)} ${esc(m.hcap)}・${m.ext?"延長あり":"9回打切"}</span>
-        ${fin? "" : `<button class="btn small primary" style="margin-left:auto" data-final="${m.id}">結果確定</button>`}
+        ${(fin||readOnly)? "" : `<button class="btn small primary" style="margin-left:auto" data-final="${m.id}">結果確定</button>`}
       </div>
       <div class="scorebox">
         <span class="s-team">${esc(m.away)}</span>
@@ -1137,8 +1127,7 @@ function unionPnlCards(){
         <span class="s-team">${esc(m.home)}</span>
       </div>
       <div data-upnlbox="${m.id}">${upnlBoxHTML(m)}</div>
-    </div>`;}).join("")}</div>
-  <p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ表判定→自動精算を実行します（9回裏終了・延長決着時は自動確定）。受入・支払やレーキバックの勝ち負け内訳は<b>データページ → 試合別 損益記録</b>で確認できます。</p>`;
+    </div>`;}).join("")}</div>`;
 }
 /* データページ（ユニオン管理）：1試合ずつの精算記録 */
 function upnlRecBodyHTML(m){
@@ -1275,32 +1264,12 @@ function liveCards(league){
     </div>`;
   }).join("")}</div>`;
 }
-function liveTable(withAction){
-  const lives = state.matches.filter(m=>m.status==="live" || m.status==="final");
-  if(!lives.length) return '<div class="panel empty">現在試合中のゲームはありません</div>';
-  return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>スコア</th><th>イニング</th><th>ハンデ</th><th>判定</th><th class="hide-m">最終プール</th><th>ユニオン損益</th>${withAction?"<th>操作</th>":""}</tr></thead>
-    <tbody>${lives.map(m=>{
-      const fin = m.status==="final";
-      return `
-      <tr><td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
-      <td class="num" style="font-size:16px;font-weight:700" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</td>
-      <td class="amb num" data-linning="${m.id}">${fin? finLabel(m) : m.live.inning}</td>
-      <td class="amb">${esc(m.hcapSide)} ${m.hcap}</td>
-      <td data-ljudge="${m.id}">${liveJudge(m)}</td>
-      <td class="num hide-m" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
-      <td class="num" style="line-height:1.5" data-upnl="${m.id}">${upnlHTML(m)}</td>
-      ${withAction? `<td>${fin? '<span class="pill win">精算済</span>' : `<button class="btn small primary" data-final="${m.id}">結果確定</button>`}</td>`:""}</tr>`;
-    }).join("")}</tbody>
-  </table>${withAction? '<p class="hint">「結果確定」で現在のスコアを最終結果として確定し、ハンデ判定→対象ベットの自動精算（的中者へ配当・手数料徴収・返還）を実行します。9回裏終了時は自動確定。</p>':""}</div>`;
-}
 function updateLive(){
   state.matches.forEach(m=>{
     if(m.status!=="live" && m.status!=="final") return;
     document.querySelectorAll(`[data-lscore="${m.id}"]`).forEach(el=>el.textContent=`${m.live.a} - ${m.live.h}`);
     document.querySelectorAll(`[data-linning="${m.id}"]`).forEach(el=>el.textContent = m.status==="final"? finLabel(m) : m.live.inning);
     document.querySelectorAll(`[data-ljudge="${m.id}"]`).forEach(el=>el.textContent=liveJudge(m));
-    document.querySelectorAll(`[data-upnl="${m.id}"]`).forEach(el=>el.innerHTML=upnlHTML(m));
     document.querySelectorAll(`[data-upnlbox="${m.id}"]`).forEach(el=>el.innerHTML=upnlBoxHTML(m));
     document.querySelectorAll(`[data-upnlrec="${m.id}"]`).forEach(el=>el.innerHTML=upnlRecBodyHTML(m));
     document.querySelectorAll(`[data-upnlnet="${m.id}"]`).forEach(el=>{
@@ -1372,22 +1341,6 @@ function matchCards(interactive, league){
       </div>`:""}
     </div>`;
   }).join("")}</div>`;
-}
-function poolTable(openOnly){
-  const list = openOnly ? state.matches.filter(m=>m.status!=="live" && m.status!=="final") : state.matches;
-  if(!list.length) return '<div class="panel empty">受付中の試合はありません</div>';
-  return `<div class="panel tblwrap"><table>
-    <thead><tr><th>試合</th><th>予想プール合計</th><th>寄り（緑＝ビジター／青＝ホーム）</th><th class="hide-m">件数</th><th>状態</th></tr></thead>
-    <tbody>${list.map(m=>{
-      const closed = m.status==="closed" || m.deadline<=Date.now();
-      return `<tr>
-        <td><span class="pill" style="margin-right:6px">${m.lg}</span><strong>${esc(m.away)} - ${esc(m.home)}</strong><span style="color:var(--muted)">（${m.start}）</span></td>
-        <td class="num amb" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</td>
-        <td><div class="pool" style="min-width:220px" data-pool="${m.id}">${poolHTML(m)}</div></td>
-        <td class="num hide-m" data-pbets="${m.id}">${m.pool.bets}件</td>
-        <td>${m.status==="live"?'<span class="pill stop">試合中</span>':m.status==="final"?'<span class="pill closed">終了・精算済</span>':closed?'<span class="pill closed">締切済</span>':'<span class="pill open">受付中</span>'}</td>
-      </tr>`;
-    }).join("")}</tbody></table></div>`;
 }
 /* 試合の編集ページ（ユニオン管理） */
 function matchEditHTML(){
@@ -2262,7 +2215,7 @@ ${card("配下ベット総額（今月）", yen(volSum)+"<small>P</small>", "エ
         <td style="color:var(--muted)">→</td></tr>`).join("")}</tbody>
     </table></div>
     <h2 class="sec">本日のベット状況</h2>
-    ${ud.real? poolTable() : dummyPoolTable(u.name)}`;
+    ${ud.real? unionPnlCards(true) + '<h2 class="sec">受付中の試合</h2>' + openMatchCards(true) : dummyPoolTable(u.name)}`;
 }
 
 /* ================= ページ：ベット ================= */
@@ -2291,7 +2244,17 @@ function renderBet(){
       ${matchCards(true, "NPB")}
       <h2 class="sec">MLB 本日の結果 — 精算済（延長あり）</h2>
       ${liveCards("MLB")}
-      <p class="hint">ハンデは日本式（<a href="#" class="link open-hande"><b>ハンデ表を見る</b></a>）。出しチーム基準で<b>丸勝ち=100%／分勝ち・分負け=割合精算／勝負無し=全額返還</b>。「半」は分けの無い明確なライン。勝ち分には手数料 ${state.feeRate.toFixed(1)}% がかかります（丸勝ち10,000P→+9,000P）。<b>延長あり／9回打切</b>は試合ごとにユニオンが設定。試合が始まると自動的に速報表示へ切り替わります。</p>`;
+      <div class="panel" style="margin-top:20px">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">ルール</div>
+        <ul style="margin:0;padding-left:1.3em;font-size:12px;color:var(--muted);line-height:2.1">
+          <li>ハンデは日本式です（<a href="#" class="link open-hande"><b>ハンデ表を見る</b></a>）</li>
+          <li>出しチーム基準で <b style="color:var(--text)">丸勝ち＝100%</b>／<b style="color:var(--text)">分勝ち・分負け＝割合精算</b>／<b style="color:var(--text)">勝負無し＝全額返還</b></li>
+          <li>「半」は分けの無い明確なラインです（例：1半＝1点差までは丸負け、2点差から丸勝ち）</li>
+          <li>勝ち分には手数料 <b class="amb">${state.feeRate.toFixed(1)}%</b> がかかります（丸勝ち10,000P → +9,000P）</li>
+          <li>延長あり／9回打切は試合ごとにユニオンが設定します</li>
+          <li>試合が始まると自動的に速報表示へ切り替わります</li>
+        </ul>
+      </div>`;
   }
   if(state.role==="agent"){
     el.innerHTML = `
@@ -2316,11 +2279,11 @@ function renderBet(){
   }
   if(state.role==="admin"){
     el.innerHTML = `
-      <h2 class="sec"><span class="live"></span>試合速報</h2>
-      ${liveTable()}
-      <h2 class="sec">東京セントラルユニオンの受付中プール（監視ビュー）</h2>
-      ${poolTable(true)}
-      <p class="hint">運営はベット内容の閲覧のみ可能。ハンデ・締切の設定は各ユニオン管理者が行います。試合中・終了分のプールは上の試合速報に表示されます。</p>`;
+      <h2 class="sec"><span class="live"></span>試合速報 — 東京セントラルユニオン（監視ビュー）</h2>
+      ${unionPnlCards(true)}
+      <h2 class="sec"><span class="live"></span>受付中の試合</h2>
+      ${openMatchCards(true)}
+      <p class="hint">運営はベット状況・ユニオン損益の閲覧のみ可能。ハンデ・締切の設定や結果確定は各ユニオン管理者が行います。</p>`;
   }
 }
 
@@ -2927,7 +2890,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.5-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.6-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
