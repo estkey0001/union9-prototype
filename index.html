@@ -227,6 +227,9 @@
   .uni-card .info{flex:1;min-width:0}
   .uni-card .nm{font-weight:900;font-size:14.5px}
   .uni-card .meta2{font-size:11px;color:var(--muted)}
+  .mrow{display:flex;flex-wrap:wrap;gap:1px 10px;align-items:baseline;font-size:11px;color:var(--muted);line-height:1.9}
+  .mrow>span{white-space:nowrap}
+  .mrow.lg{font-size:12px}
   .uni-list{display:grid;gap:10px}
   .uni-card.click{cursor:pointer}
   .uni-card.click:hover{border-color:var(--green-deep)}
@@ -364,7 +367,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.8.1
+      UIプロトタイプ v0.8.2
     </div>
   </aside>
 
@@ -469,7 +472,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.8.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.8.2 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -728,7 +731,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.8.1：スマホでの文字の折返し・見出し・通知ポップアップを全体的に改善しました（通知はタップで閉じられます）"},
+    {d:"8/28", t:"v0.8.2：メンバー一覧・プロフィールなど全リスト行の折返しを項目単位に統一しました"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -773,6 +776,10 @@ function fmtD(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
 function iso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function esc(s){return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const statusPill = s => s==="pending" ? '<span class="pill pend">承認待ち</span>' : s==="approved" ? '<span class="pill win">承認済</span>' : '<span class="pill lose">却下</span>';
+// メタ情報行：各項目を折返し禁止のかたまりにして、折返しは項目単位で行う（スマホの変な位置での改行防止）
+function mrow(parts, cls=""){
+  return `<div class="mrow${cls?" "+cls:""}">${parts.filter(Boolean).map(p=>`<span>${p}</span>`).join("")}</div>`;
+}
 // ハンデのラダー表記（日本式: 0.3/0.5/0.7 → 1 → 1.3… → 1半 → 1半3… → 2 …）
 const LADDER = (()=>{
   const a = ["0","0.3","0.5","0.7"];
@@ -1186,7 +1193,7 @@ function unionPnlRecords(){
       <div class="ava" style="font-size:11px;font-weight:900">${m.lg}</div>
       <div class="info">
         <div class="nm">${esc(m.away)} - ${esc(m.home)} <span class="num amb" style="font-size:13px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span> ${fin?'<span class="pill closed">精算済</span>':'<span class="livepill">LIVE</span>'}</div>
-        <div class="meta2">出し ${esc(m.hcapSide)} ${esc(m.hcap)}・<span data-ljudge="${m.id}">${liveJudge(m)}</span></div>
+        ${mrow([`出し ${esc(m.hcapSide)} ${esc(m.hcap)}`, `<span data-ljudge="${m.id}">${liveJudge(m)}</span>`])}
       </div>
       <span class="num ${c.net>=0?"pos":"neg"}" style="font-size:14px;text-align:right" data-upnlnet="${m.id}">${sign(c.net)}P${fin?"":"（見込み）"}</span>
       <span class="arrow">→</span>
@@ -1249,11 +1256,11 @@ function myBetLine(m){
     const settled = state.history.filter(h=>h.mid===m.id);
     if(!settled.length) return "";
     const s = settled.reduce((a,h)=>a+h.pnl,0);
-    return `・あなたの収支 <b class="num ${s>=0?"pos":"neg"}">${sign(s)}P</b>`;
+    return `あなたの収支 <b class="num ${s>=0?"pos":"neg"}">${sign(s)}P</b>`;
   }
   const e = myExpPnl(m);
   if(e===null) return "";
-  return `・予想収益 <b class="num ${e>=0?"pos":"neg"}" data-bexp="${m.id}">${sign(e)}P</b>`;
+  return `予想収益 <b class="num ${e>=0?"pos":"neg"}" data-bexp="${m.id}">${sign(e)}P</b>`;
 }
 function liveCards(league){
   const lives = state.matches.filter(m=>(m.status==="live" || m.status==="final") && (!league || m.lg===league));
@@ -1437,7 +1444,7 @@ function editUserHTML(){
       <div class="pava">${esc(u.name.charAt(0)).toUpperCase()}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:900">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""} ${u.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}</div>
-        <div style="font-size:12px;color:var(--muted)">登録 ${u.joined}・今月ベット ${yen(u.vol)}P</div>
+        ${mrow([`登録 ${u.joined}`,`今月ベット ${yen(u.vol)}P`],"lg")}
       </div>
       <button class="btn small" data-mdetail="${esc(u.name)}">収支詳細 →</button>
     </div>
@@ -1474,7 +1481,7 @@ function editAgentHTML(){
       <div class="pava">${esc(g.name.charAt(0))}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:900">${esc(g.name)}エージェント</div>
-        <div style="font-size:12px;color:var(--muted)">紹介コード <b class="amb">${AGENT_CODES[g.name]||"—"}</b>・配下 ${g.users}名・今月ベット総額 ${yen(g.vol)}P</div>
+        ${mrow([`紹介コード <b class="amb">${AGENT_CODES[g.name]||"—"}</b>`,`配下 ${g.users}名`,`今月ベット総額 ${yen(g.vol)}P`],"lg")}
       </div>
       <button class="btn small" data-adetail="${esc(g.name)}">実績詳細 →</button>
     </div>
@@ -1499,7 +1506,7 @@ function editAgentHTML(){
         <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
         <div class="info">
           <div class="nm">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""}</div>
-          <div class="meta2">今月ベット ${yen(u.vol)}P ${u.active?"":"・休眠"}</div>
+          ${mrow([`今月ベット ${yen(u.vol)}P`, u.active?"":"休眠"])}
         </div>
         <span class="num ${u.pnl>=0?"pos":"neg"}" style="font-size:13px">${sign(u.pnl)}P</span>
         <span class="arrow">→</span>
@@ -1602,10 +1609,7 @@ function memberDetailHTML(){
       <div class="pava">${esc(name.charAt(0)).toUpperCase()}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:900">${esc(name)} ${m.active?'<span class="pill open">アクティブ</span>':'<span class="pill closed">休眠</span>'}${m.self?' <span class="pill open">デモ本人</span>':""}</div>
-        <div style="font-size:12px;color:var(--muted)">
-          ユニオン参加日 2026/${esc(d.joined)}・担当エージェント：${esc(m.agent)}・
-          紹介者：${d.ref? `<b class="amb">${esc(d.ref.code)}</b>（${esc(d.ref.by)}）` : "なし（直接参加）"}
-        </div>
+        ${mrow([`ユニオン参加日 2026/${esc(d.joined)}`,`担当エージェント：${esc(m.agent)}`,`紹介者：${d.ref? `<b class="amb">${esc(d.ref.code)}</b>（${esc(d.ref.by)}）` : "なし（直接参加）"}`],"lg")}
       </div>
       ${(state.role==="union"||state.role==="admin") ? `
       <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
@@ -1751,7 +1755,7 @@ function agentDetailHTML(){
       <div class="pava">${esc(name.charAt(0))}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:900">${esc(name)}エージェント <span class="pill open">稼働中</span></div>
-        <div style="font-size:12px;color:var(--muted)">紹介コード <b class="amb">${AGENT_CODES[name]||"—"}</b>・配下 ${g.users}名・バック率 ${g.back}%（手数料額の${g.back}%・ユニオン設定）</div>
+        ${mrow([`紹介コード <b class="amb">${AGENT_CODES[name]||"—"}</b>`,`配下 ${g.users}名`,`バック率 ${g.back}%（ユニオン設定）`],"lg")}
       </div>
       <button class="btn small" data-mock="${esc(name)}エージェントへのメッセージ（モック）">連絡</button>
     </div>
@@ -1815,7 +1819,7 @@ function renderHome(){
           <div class="ava">⚾</div>
           <div class="info">
             <div class="nm">${esc(m.away)} <span class="num amb" style="font-size:17px" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span> ${esc(m.home)} ${m.status==="final"?'<span class="pill closed">試合終了</span>':'<span class="livepill">LIVE</span>'}</div>
-            <div class="meta2"><span class="inning" data-linning="${m.id}">${m.status==="final"?finLabel(m):m.live.inning}</span>${myBetLine(m)}</div>
+            ${mrow([`<span class="inning" data-linning="${m.id}">${m.status==="final"?finLabel(m):m.live.inning}</span>`, myBetLine(m)])}
           </div>
           <button class="btn small" data-goto="bet">速報</button>
         </div>`).join("")}
@@ -1826,7 +1830,7 @@ function renderHome(){
           <div class="ava">⚾</div>
           <div class="info">
             <div class="nm">${esc(m.away)} vs ${esc(m.home)} <span class="amb num" style="font-size:12px">ハンデ ${esc(m.hcapSide)} ${m.hcap}</span></div>
-            <div class="meta2"><span class="cd" data-cd="${m.id}">${fmtCd(m.deadline-Date.now())}</span>${state.us.showPool?`・プール <span data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</span>`:""}</div>
+            ${mrow([`<span class="cd" data-cd="${m.id}">${fmtCd(m.deadline-Date.now())}</span>`, state.us.showPool?`プール <span data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</span>`:""])}
           </div>
           <button class="btn small primary" data-goto="bet">ベット</button>
         </div>`).join("")}
@@ -1913,7 +1917,7 @@ function unionSelectHTML(){
           <div class="ava">⚾</div>
           <div class="info">
             <div class="nm">東京セントラルユニオン <span class="pill open">選択中</span></div>
-            <div class="meta2">ID #482913・メンバー${calc.unionMembers()}名・勝ち手数料 ${state.feeRate.toFixed(1)}%・${state.role==="agent"?"あなたの役割：エージェント":"担当：田中エージェント"}</div>
+            ${mrow(["ID #482913",`メンバー${calc.unionMembers()}名`,`勝ち手数料 ${state.feeRate.toFixed(1)}%`, state.role==="agent"?"あなたの役割：エージェント":"担当：田中エージェント"])}
           </div>
           <button class="btn small primary" data-goto="bet">ベットへ</button>
         </div>
@@ -1933,7 +1937,7 @@ function unionSelectHTML(){
           <div class="ava">⚾</div>
           <div class="info">
             <div class="nm">${esc(u.name)}</div>
-            <div class="meta2">ID #${u.uid}・メンバー${u.members}名・手数料 ${u.fee.toFixed(1)}%${u.refReq?'・<b class="amb">紹介ID必須</b>':""}</div>
+            ${mrow([`ID #${u.uid}`,`メンバー${u.members}名`,`手数料 ${u.fee.toFixed(1)}%`, u.refReq?'<b class="amb">紹介ID必須</b>':""])}
           </div>
           ${u.status==="pending"
             ? `<span style="text-align:right"><span class="pill pend">申請中</span>${u.ref?`<div style="font-size:10px;color:var(--muted);margin-top:3px">紹介者ID: <b class="amb">${esc(u.ref)}</b></div>`:""}</span>`
@@ -1948,7 +1952,7 @@ function unionAdminSettingsHTML(){
         <div class="ava">⚾</div>
         <div class="info">
           <div class="nm">東京セントラルユニオン</div>
-          <div class="meta2">ID #482913・作成 2026/04/02・管理者 yamamoto・招待コード <b class="amb">UNION-TCU</b></div>
+          ${mrow(["ID #482913","作成 2026/04/02","管理者 yamamoto",'招待コード <b class="amb">UNION-TCU</b>'])}
         </div>
         <button class="btn small" data-copy="UNION-TCU">招待コードをコピー</button>
       </div>
@@ -2214,7 +2218,7 @@ function adminUnionDetailHTML(){
         <div style="font-weight:900">${esc(u.name)}
           ${u.status==="active"?'<span class="pill open">稼働中</span>':u.status==="review"?'<span class="pill pend">審査中</span>':'<span class="pill stop">停止中</span>'}
         </div>
-        <div style="font-size:12px;color:var(--muted)">管理者 ${esc(u.owner)}・メンバー ${calc.membersOf(u)}名・手数料率 ${u.fee.toFixed(1)}%・今月流通 ${fmtM(volSum)}P</div>
+        ${mrow([`管理者 ${esc(u.owner)}`,`メンバー ${calc.membersOf(u)}名`,`手数料率 ${u.fee.toFixed(1)}%`,`今月流通 ${fmtM(volSum)}P`],"lg")}
       </div>
       <button class="btn small danger" data-mock="${esc(u.name)} の停止処理（モック）">停止</button>
     </div>
@@ -2329,7 +2333,7 @@ function renderMembers(){
         <div class="pava">D</div>
         <div>
           <div style="font-weight:900">demo_user <span class="pill open">アクティブ</span></div>
-          <div style="font-size:12px;color:var(--muted)">ID #100482・東京セントラルユニオン所属・担当エージェント：田中（バック率 ${state.agentUsers.find(u=>u.self).back}%）</div>
+          ${mrow(["ID #100482","東京セントラルユニオン所属",`担当：田中（バック率 ${state.agentUsers.find(u=>u.self).back}%）`],"lg")}
         </div>
       </div>
       <h2 class="sec">ユニオン内 収支ランキング（今月）</h2>
@@ -2368,7 +2372,7 @@ function renderMembers(){
           <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
           <div class="info">
             <div class="nm">${esc(u.name)} ${u.self?'<span class="pill open">デモ本人</span>':""} ${u.active?"":'<span class="pill closed">休眠</span>'}</div>
-            <div class="meta2">ベット ${yen(u.vol)}P・バック ${u.back}%・上限/試合 ${u.mcap?yen(u.mcap):"—"}・上限/日 ${u.dcap?yen(u.dcap):"—"}</div>
+            ${mrow([`ベット ${yen(u.vol)}P`,`バック ${u.back}%`,`上限/試合 ${u.mcap?yen(u.mcap)+"P":"—"}`,`上限/日 ${u.dcap?yen(u.dcap)+"P":"—"}`])}
           </div>
           <span class="arrow">→</span>
         </div>`).join("")}
@@ -2401,7 +2405,7 @@ function renderMembers(){
           <div class="ava" style="font-size:15px;font-weight:900">${esc(g.name.charAt(0))}</div>
           <div class="info">
             <div class="nm">${esc(g.name)}エージェント</div>
-            <div class="meta2">配下 ${g.users}名・ベット総額 ${yen(g.vol)}P・バック ${g.back}%・上限/試合 ${g.matchCap?yen(g.matchCap):"—"}</div>
+            ${mrow([`配下 ${g.users}名`,`ベット総額 ${yen(g.vol)}P`,`バック ${g.back}%`,`上限/試合 ${g.matchCap?yen(g.matchCap)+"P":"—"}`])}
           </div>
           <span class="num amb" style="font-size:13px">${yen(Math.round(g.vol*state.feeRate/100*g.back/100))}P</span>
           <span class="arrow">→</span>
@@ -2849,10 +2853,10 @@ function renderSettings(){
   const el = $("#page-settings");
   const p = state.profile || {name:"demo_user", uid:"100482", email:"demo@union9.app"};
   const prof = {
-    user:{n:p.name, i:(p.name.charAt(0)||"U").toUpperCase(), sub:`ID #${p.uid}・${p.email}・東京セントラルユニオン所属・担当：田中エージェント`},
-    agent:{n:"田中エージェント", i:"田", sub:"紹介コード TANAKA-9・東京セントラルユニオン所属"},
-    union:{n:"yamamoto（ユニオン管理者）", i:"Y", sub:"東京セントラルユニオン #482913 管理者"},
-    admin:{n:"UNION9 運営", i:"運", sub:"プラットフォーム管理者アカウント"},
+    user:{n:p.name, i:(p.name.charAt(0)||"U").toUpperCase(), sub:[`ID #${p.uid}`, esc(p.email), "東京セントラルユニオン所属", "担当：田中エージェント"]},
+    agent:{n:"田中エージェント", i:"田", sub:["紹介コード TANAKA-9","東京セントラルユニオン所属"]},
+    union:{n:"yamamoto（ユニオン管理者）", i:"Y", sub:["東京セントラルユニオン #482913","管理者"]},
+    admin:{n:"UNION9 運営", i:"運", sub:["プラットフォーム管理者アカウント"]},
   }[state.role];
   el.innerHTML = `
     ${state.role==="user"? userSettingsHTML() : ""}
@@ -2864,7 +2868,7 @@ function renderSettings(){
       <div class="pava">${prof.i}</div>
       <div>
         <div style="font-weight:900">${esc(prof.n)}</div>
-        <div style="font-size:12px;color:var(--muted)">${esc(prof.sub)}</div>
+        ${mrow(prof.sub,"lg")}
       </div>
       <button class="btn small end" style="margin-left:auto" data-mock="プロフィール編集（モック）">編集</button>
     </div>
@@ -2895,7 +2899,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.8.1-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.8.2-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
