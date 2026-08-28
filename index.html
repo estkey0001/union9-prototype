@@ -28,10 +28,11 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{background:var(--ground);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  body{background:var(--ground);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;font-feature-settings:"palt";-webkit-tap-highlight-color:transparent}
   button{font-family:var(--body);cursor:pointer}
   input,select{font-family:var(--body)}
-  .num{font-family:var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .num{font-family:var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+  .pill,.livepill{white-space:nowrap}
 
   /* ============ アプリシェル：サイドナビ ============ */
   .app{min-height:100vh}
@@ -86,8 +87,8 @@
   .demo-tag{font-size:9.5px;color:var(--muted);letter-spacing:.1em;align-self:center}
 
   /* ============ 汎用 ============ */
-  h2.sec{font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--muted);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
-  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2.sec{font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--muted);margin:30px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;line-height:1.6}
+  h2.sec::after{content:"";flex:1;min-width:28px;height:1px;background:var(--line)}
   h2.sec .btn{margin-left:auto}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
@@ -204,7 +205,7 @@
   .terms h4{font-size:13px;margin:18px 0 6px;color:var(--amber)}
   .terms p,.terms li{font-size:12.5px;color:var(--muted);line-height:1.9}
   .terms strong{color:var(--text)}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-deep);color:#fff;font-weight:700;font-size:13px;padding:11px 22px;border-radius:99px;transition:transform .25s;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--green-deep);color:#fff;font-weight:700;font-size:13px;line-height:1.7;padding:11px 22px;border-radius:16px;transition:transform .25s;z-index:400;box-shadow:0 8px 30px rgba(0,0,0,.5);cursor:pointer;width:max-content;max-width:calc(100vw - 28px);text-align:center}
   .toast.show{transform:translateX(-50%) translateY(0)}
   @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 
@@ -301,6 +302,10 @@
     .shopbtn{padding:5px 10px}
     .shopbtn-t{display:none}
     .demo-tag{display:none}
+    .toast{bottom:88px;font-size:12px;padding:10px 16px}
+    .btn.small{padding:6px 11px}
+    .modal{max-height:86vh;overflow-y:auto}
+    header.bar{gap:7px;padding:10px 0 10px}
     .uni-card{padding:11px 12px}
     .uni-card .nm{font-size:13px}
     .uni-card .meta2{font-size:10px}
@@ -359,7 +364,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.8.0
+      UIプロトタイプ v0.8.1
     </div>
   </aside>
 
@@ -464,7 +469,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.8.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.8.1 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -723,7 +728,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.8.0：画面上部に 🏆 ショップを新設。すべてのユーザーがアプリ内課金でアイテムを購入しポイントに交換できます"},
+    {d:"8/28", t:"v0.8.1：スマホでの文字の折返し・見出し・通知ポップアップを全体的に改善しました（通知はタップで閉じられます）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -746,8 +751,11 @@ const yen = n => n.toLocaleString("ja-JP");
 const sign = n => (n>=0? "+" : "−") + yen(Math.abs(n));
 function toast(msg){
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2400);
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove("show"), Math.min(6000, 2000 + msg.length*55));  // 長文は長めに表示
 }
+// タップ（クリック）で即座に閉じられる
+$("#toast").addEventListener("click", ()=>{ const t=$("#toast"); clearTimeout(t._h); t.classList.remove("show"); });
 function fmtCd(ms){
   if(ms <= 0) return "締切済";
   if(ms >= 3600000){
@@ -1095,9 +1103,9 @@ function upnlBoxHTML(m){
   const bar = `<div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>`;
   // 判定とユニオン損益を1行に（差異は寄りバーで見て分かるため非表示）
   const foot = (label, val, cls) => `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:9px;border-top:1px solid var(--line);padding-top:9px;font-size:12px">
-      <span>${fin?"結果":"判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
-      <span style="display:flex;align-items:baseline;gap:7px"><span style="font-size:11px;color:var(--muted)">${label}</span><b class="num ${cls}" style="font-size:19px">${val}</b></span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-top:9px;border-top:1px solid var(--line);padding-top:9px;font-size:12px">
+      <span style="white-space:nowrap">${fin?"結果":"判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
+      <span style="display:flex;align-items:baseline;gap:7px;white-space:nowrap"><span style="font-size:11px;color:var(--muted)">${label}</span><b class="num ${cls}" style="font-size:19px">${val}</b></span>
     </div>`;
   if(c.out===0){
     return bar + foot("ユニオン損益（全ベット返還）", "±0P", "");
@@ -1121,9 +1129,9 @@ function openMatchCards(readOnly){
         <span>${m.start} 開始</span>
         ${readOnly?"":'<span class="arrow" style="margin-left:auto">→</span>'}
       </div>
-      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
-        <span>ハンデ <b class="amb">${esc(m.hcapSide)} ${esc(m.hcap)}</b>・${m.ext?"延長あり":"9回打切"}</span>
-        <span style="color:var(--muted)">締切 ${hm}・<span class="num" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</span>・<span class="num" data-pbets="${m.id}">${m.pool.bets}件</span></span>
+      <div style="display:flex;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
+        <span style="white-space:nowrap">ハンデ <b class="amb">${esc(m.hcapSide)} ${esc(m.hcap)}</b>・${m.ext?"延長あり":"9回打切"}</span>
+        <span style="color:var(--muted);white-space:nowrap">締切 ${hm}・<span class="num" data-ptotal="${m.id}">${yen(m.pool.a+m.pool.h)}P</span>・<span class="num" data-pbets="${m.id}">${m.pool.bets}件</span></span>
       </div>
       <div class="pool" data-pool="${m.id}">${poolHTML(m)}</div>
     </div>`;
@@ -1140,7 +1148,8 @@ function unionPnlCards(readOnly){
         ${fin? '<span class="pill closed">試合終了・精算済</span>':'<span class="livepill">LIVE</span>'}
         <span class="pill">${m.lg}</span>
         <span class="inning" data-linning="${m.id}">${fin? finLabel(m): m.live.inning}</span>
-        <span>・ハンデ ${esc(m.hcapSide)} ${esc(m.hcap)}・${m.ext?"延長あり":"9回打切"}</span>
+        <span style="white-space:nowrap">ハンデ ${esc(m.hcapSide)} ${esc(m.hcap)}</span>
+        <span style="white-space:nowrap">${m.ext?"延長あり":"9回打切"}</span>
         ${(fin||readOnly)? "" : `<button class="btn small primary" style="margin-left:auto" data-final="${m.id}">結果確定</button>`}
       </div>
       <div class="scorebox">
@@ -1484,7 +1493,7 @@ function editAgentHTML(){
         <span class="end inline" style="align-items:center"><input type="number" style="width:110px" min="0" step="50000" value="${g.matchCap||0}" data-acap="${i}">P</span>
       </div>
     </div>
-    <h2 class="sec">配下メンバー（${members.length}名） — タップで収支詳細</h2>
+    <h2 class="sec">配下メンバー（${members.length}名）</h2>
     <div class="uni-list">${members.length? members.map(u=>`
       <div class="uni-card click" data-mdetail="${esc(u.name)}">
         <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
@@ -1612,7 +1621,7 @@ function memberDetailHTML(){
       ${card("トータルレーキ", yen(rakeTotal)+"<small>P</small>", "支払った手数料の累計", "amb")}
       ${card("今月ベット総額", yen(m.vol)+"<small>P</small>", "レーキバックの計算対象")}
     </div>
-    <h2 class="sec">収支の推移 — 任意期間で分析</h2>
+    <h2 class="sec">収支の推移</h2>
     <div class="panel">
       <div class="periodbar">
         <button data-mper="7" class="${state.mPeriodKey==="7"?"on":""}">直近7日</button>
@@ -1760,7 +1769,7 @@ function agentDetailHTML(){
         <td class="num amb">${yen(w.pay)}P</td>
         <td>${i===0?'<span class="pill pend">精算待ち</span>':'<span class="pill win">支払済</span>'}</td></tr>`).join("")}</tbody>
     </table></div>
-    <h2 class="sec">配下メンバー — 行をタップで詳細ページへ</h2>
+    <h2 class="sec">配下メンバー — タップで詳細</h2>
     <div class="panel tblwrap"><table>
       <thead><tr><th>ユーザー</th><th>今月ベット</th><th>エージェントバック</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
       <tbody>${members.length? members.map(u=>`
@@ -1800,7 +1809,7 @@ function renderHome(){
         ${card("直近7日収支", sign(week)+"P", "", week>=0?"pos":"neg")}
         ${card("支払レーキ（累計）", yen(all.reduce((a,r)=>a+r.rake,0))+"<small>P</small>", "勝ちベットの手数料10%の合計", "amb")}
       </div>
-      <h2 class="sec"><span class="live"></span>試合速報 <button class="btn small" data-goto="bet">ベットページへ →</button></h2>
+      <h2 class="sec"><span class="live"></span>試合速報 <button class="btn small" data-goto="bet">ベットへ →</button></h2>
       <div class="uni-list">${state.matches.filter(m=>m.status==="live"||m.status==="final").map(m=>`
         <div class="uni-card">
           <div class="ava">⚾</div>
@@ -1909,7 +1918,7 @@ function unionSelectHTML(){
           <button class="btn small primary" data-goto="bet">ベットへ</button>
         </div>
       </div>
-      <h2 class="sec">ユニオンを探す — IDで参加申請</h2>
+      <h2 class="sec">ユニオンを探す</h2>
       <div class="panel">
         <div class="inline">
           <label class="f">ユニオンID（必須）<input type="text" id="join-id" placeholder="例：771204" style="width:140px"></label>
@@ -2042,7 +2051,7 @@ function unionAdminSettingsHTML(){
 }
 function adminUnionTableHTML(){
   return `
-      <h2 class="sec">全ユニオン管理 — 行をタップで詳細（エージェント・ユーザー・ベット状況）</h2>
+      <h2 class="sec">全ユニオン管理 — タップで詳細</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>ユニオン</th><th>管理者</th><th>メンバー</th><th>手数料率</th><th>今月流通P</th><th>状態</th><th></th></tr></thead>
         <tbody>${state.unions.map(u=>`
@@ -2215,7 +2224,7 @@ ${card("配下ベット総額（今月）", yen(volSum)+"<small>P</small>", "エ
       ${card("運営取り分（今月・想定）", yen(Math.round(volSum*state.feeRate/200*state.as.platformCut/100))+"<small>P</small>", `想定粗利の${state.as.platformCut}%`, "pos")}
       ${card("エージェント数", ud.agents.length+"<small>名</small>")}
     </div>
-    <h2 class="sec">エージェント一覧 — 行をタップで詳細</h2>
+    <h2 class="sec">エージェント一覧 — タップで詳細</h2>
     <div class="panel tblwrap"><table>
       <thead><tr><th>エージェント</th><th>配下</th><th>配下ベット総額（今月）</th><th>バック率</th><th>支払P</th><th></th></tr></thead>
       <tbody>${ud.agents.map(g=>`
@@ -2225,7 +2234,7 @@ ${card("配下ベット総額（今月）", yen(volSum)+"<small>P</small>", "エ
         <td class="num amb">${yen(Math.round(g.vol*state.feeRate/100*g.back/100))}P</td>
         <td style="color:var(--muted)">→</td></tr>`).join("")}</tbody>
     </table></div>
-    <h2 class="sec">メンバー一覧${ud.real?"":"（主要メンバー抜粋）"} — 行をタップで詳細</h2>
+    <h2 class="sec">メンバー一覧 — タップで詳細</h2>
     <div class="panel tblwrap"><table>
       <thead><tr><th>ユーザー</th><th class="hide-m">担当エージェント</th><th>今月ベット</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
       <tbody>${ud.members.map(m2=>`
@@ -2260,11 +2269,11 @@ function renderBet(){
       </div>` : (state.us.minGames>1? `<p class="hint" style="margin-top:16px">ℹ このユニオンは<b>最低${state.us.minGames}試合縛り</b>です（1試合だけのベットは不可）。</p>`:"");
     el.innerHTML = `
       ${myBetsBar}
-      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム（9回打切）</h2>
+      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム</h2>
       ${liveCards("NPB")}
-      <h2 class="sec">NPB 予想受付中 — ナイター${state.us.showPool?"（ユニオン内の寄りをリアルタイム表示）":""}</h2>
+      <h2 class="sec">NPB 予想受付中 — ナイター</h2>
       ${matchCards(true, "NPB")}
-      <h2 class="sec">MLB 本日の結果 — 精算済（延長あり）</h2>
+      <h2 class="sec">MLB 本日の結果</h2>
       ${liveCards("MLB")}
       <div class="panel" style="margin-top:20px">
         <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;margin-bottom:6px">ルール</div>
@@ -2280,11 +2289,11 @@ function renderBet(){
   }
   if(state.role==="agent"){
     el.innerHTML = `
-      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム（9回打切）</h2>
+      <h2 class="sec"><span class="live"></span>NPB 試合速報 — デイゲーム</h2>
       ${liveCards("NPB")}
       <h2 class="sec">NPB 予想受付中 — ナイター</h2>
       ${matchCards(false, "NPB")}
-      <h2 class="sec">MLB 本日の結果 — 精算済（延長あり）</h2>
+      <h2 class="sec">MLB 本日の結果</h2>
       ${liveCards("MLB")}
       <p class="hint">エージェントもユーザーとして参加できます（このデモではユーザーロールでベット操作を確認してください）。</p>`;
   }
@@ -2301,7 +2310,7 @@ function renderBet(){
   }
   if(state.role==="admin"){
     el.innerHTML = `
-      <h2 class="sec"><span class="live"></span>試合速報 — 東京セントラルユニオン（監視ビュー）</h2>
+      <h2 class="sec"><span class="live"></span>試合速報（監視ビュー）</h2>
       ${unionPnlCards(true)}
       <h2 class="sec"><span class="live"></span>受付中の試合</h2>
       ${openMatchCards(true)}
@@ -2344,7 +2353,7 @@ function renderMembers(){
       return;
     }
     el.innerHTML = `
-      <h2 class="sec">紹介コード — ユニオンを広める</h2>
+      <h2 class="sec">紹介コード</h2>
       <div class="panel">
         <div class="refcode">
           <span class="code">TANAKA-9</span>
@@ -2353,7 +2362,7 @@ function renderMembers(){
         </div>
         <div style="margin-top:14px">${flowHTML()}</div>
       </div>
-      <h2 class="sec">配下ユーザー管理 — タップして個別に編集</h2>
+      <h2 class="sec">配下ユーザー管理 — タップで編集</h2>
       <div class="uni-list">${state.agentUsers.map((u,i)=>`
         <div class="uni-card click" data-euser="${i}">
           <div class="ava" style="font-size:15px;font-weight:900">${esc(u.name.charAt(0)).toUpperCase()}</div>
@@ -2386,7 +2395,7 @@ function renderMembers(){
           <td>${statusPill(r.status)}</td>
           <td>${r.status==="pending"?`<button class="btn small primary" data-ap-j="${r.id}">承認</button> <button class="btn small danger" data-rj-j="${r.id}">却下</button>`:"—"}</td></tr>`).join("")}
         </tbody></table></div>
-      <h2 class="sec">エージェント別設定 — タップして個別に編集</h2>
+      <h2 class="sec">エージェント別設定 — タップで編集</h2>
       <div class="uni-list">${state.agents.map((g,i)=>`
         <div class="uni-card click" data-eagent="${i}">
           <div class="ava" style="font-size:15px;font-weight:900">${esc(g.name.charAt(0))}</div>
@@ -2399,7 +2408,7 @@ function renderMembers(){
         </div>`).join("")}
       </div>
       <p class="hint">バック率＝<b>手数料額を100%とした割合</b>（勝ち負け関係なく発生）。金額はレーキバック支払（今月）。</p>
-      <h2 class="sec">メンバー一覧 — 行をタップで詳細ページへ</h2>
+      <h2 class="sec">メンバー一覧 — タップで詳細</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>ユーザー</th><th class="hide-m">担当エージェント</th><th>今月ベット</th><th>今月収支</th><th>状態</th><th></th></tr></thead>
         <tbody>${state.members.map(u=>`
@@ -2482,7 +2491,7 @@ function renderCashier(){
         ${card("保有ポイント", yen(state.wallets.agent)+"<small>P</small>", "配布・回収用ウォレット", "amb")}
         ${card("承認待ち", state.reqsToAgent.filter(r=>r.status==="pending").length+"<small>件</small>", "ユーザーからのリクエスト")}
       </div>
-      <h2 class="sec">ポイント送受信 — ユーザーを選択</h2>
+      <h2 class="sec">ポイント送受信</h2>
       <div class="grid2">
         <div class="panel">
           <div class="formgrid">
@@ -2552,7 +2561,7 @@ function renderCashier(){
         ${card("ユニオン保有ポイント", yen(state.wallets.union)+"<small>P</small>", "配布・仕入れ用ウォレット", "amb")}
         ${card("承認待ち", state.reqsToUnion.filter(r=>r.status==="pending").length+"<small>件</small>", "エージェント・ユーザーからのリクエスト")}
       </div>
-      <h2 class="sec">ポイント送受信 — エージェント・ユーザー宛て</h2>
+      <h2 class="sec">ポイント送受信</h2>
       <div class="grid2">
         <div class="panel">
           <div class="formgrid">
@@ -2645,7 +2654,7 @@ function renderData(){
         ${card("週レーキ（直近7日）", yen(rakeWeek)+"<small>P</small>", "", "amb")}
         ${card("今月レーキ", yen(rakeMonth)+"<small>P</small>", "", "amb")}
       </div>
-      <h2 class="sec">収支管理 — 任意期間のレーキも下のフィルタで確認</h2>
+      <h2 class="sec">収支管理</h2>
       <div class="panel">
         <div class="periodbar" id="u-periodbar">
           <button data-per="7" class="${state.periodKey==="7"?"on":""}">直近7日</button>
@@ -2690,7 +2699,7 @@ function renderData(){
 ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<small>P</small>", `手数料相当額の${state.agentBackRate}%`)}
         ${card("あなたの純取り分", yen(Math.round(s.agentNet))+"<small>P</small>", `ユーザー還元 ${yen(Math.round(s.userPay))}P を差し引き後`, "pos")}
       </div>
-      <h2 class="sec">ユーザーへのレーキバック支払 — 週・月でいくら返すか／返したか</h2>
+      <h2 class="sec">レーキバック支払 — 今週・先週・今月</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>ユーザー</th><th>バック率</th><th>今週（精算待ち）</th><th>先週（支払済）</th><th>今月累計</th></tr></thead>
         <tbody>${state.agentUsers.map(u=>{
@@ -2715,7 +2724,7 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
         </tbody></table>
         <p class="hint">バック率0%のユーザーには支払なし。精算は毎週月曜に自動実行され、あなたのレーキバックから差し引かれます。</p>
       </div>
-      <h2 class="sec">配下ユーザー実績（今月）— 行をタップで詳細ページへ</h2>
+      <h2 class="sec">配下ユーザー実績（今月）— タップで詳細</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>ユーザー</th><th>ベット総額</th><th>バック原資（手数料相当）</th><th>ユーザー還元</th><th>あなたの取り分</th><th></th></tr></thead>
         <tbody>${state.agentUsers.map(u=>{
@@ -2755,9 +2764,9 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
         ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "リアルタイム")}
         ${card("今月ベット総額", yen(calc.unionVol())+"<small>P</small>", "エージェント配下の合計")}
       </div>
-      <h2 class="sec">試合別 損益記録 — タップで精算内訳の詳細へ</h2>
+      <h2 class="sec">試合別 損益記録 — タップで詳細</h2>
       ${unionPnlRecords()}
-      <h2 class="sec">エージェント別 支払サマリー（今月）— 行をタップで詳細ページへ</h2>
+      <h2 class="sec">エージェント別 支払（今月）— タップで詳細</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>エージェント</th><th>配下</th><th>配下ベット総額</th><th>バック率</th><th>支払P</th><th></th><th></th></tr></thead>
         <tbody>${state.agents.map(g=>{
@@ -2783,7 +2792,7 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
         ${card("運営取り分（今月・想定）", yen(calc.platformCutP())+"<small>P</small>", `各ユニオン想定粗利の${state.as.platformCut}%`, "amb")}
         ${card("警告（今週）", "3<small>件</small>", "手数料上限・急増検知", "neg")}
       </div>
-      <h2 class="sec">監査ログ — 発行・移動・警告の全記録</h2>
+      <h2 class="sec">監査ログ</h2>
       <div class="panel tblwrap" style="max-height:420px;overflow-y:auto"><table>
         <thead><tr><th>日時</th><th>種別</th><th>内容</th></tr></thead>
         <tbody>${state.log.map(l=>`
@@ -2886,7 +2895,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.8.0-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.8.1-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
