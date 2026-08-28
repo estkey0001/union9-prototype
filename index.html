@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.5.0
+      UIプロトタイプ v0.6.0
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.5.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.6.0 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -544,11 +544,11 @@ function freshMatches(){
     {id:4, lg:"NPB", ext:false, away:"ソフトバンク", home:"ロッテ", hcapSide:"ソフトバンク", hcap:"2", start:"18:30", deadline: t0+72*60*1000, status:"open", pool:{a:264000,h:288000,bets:158}},
     {id:6, lg:"NPB", ext:false, away:"西武", home:"楽天", hcapSide:"楽天", hcap:"1", start:"18:00", deadline: t0+42*60*1000, status:"open", pool:{a:118000,h:167000,bets:84}},
     // NPB デイゲーム（試合中：速報表示）※9回打切
-    {id:3, lg:"NPB", ext:false, away:"DeNA", home:"ヤクルト", hcapSide:"DeNA", hcap:"1半3", start:"14:00", status:"live", deadline: t0-4*3600*1000, live:{a:3,h:2,inning:"4回表"}, pool:{a:301000,h:145000,bets:132}},
+    {id:3, lg:"NPB", ext:false, away:"DeNA", home:"ヤクルト", hcapSide:"DeNA", hcap:"1半3", start:"14:00", status:"live", deadline: t0-4*3600*1000, live:{a:4,h:2,inning:"4回表"}, pool:{a:301000,h:145000,bets:132}},  // 2点差＝7分勝ちペース（分の検証用）
     {id:5, lg:"NPB", ext:false, away:"日本ハム", home:"オリックス", hcapSide:"日本ハム", hcap:"0.5", start:"13:00", status:"live", deadline: t0-5*3600*1000, live:{a:2,h:4,inning:"6回裏"}, pool:{a:172000,h:189000,bets:97}},
     // MLB（今朝開催：試合終了・精算済）※メジャーは延長あり
     {id:7, lg:"MLB", ext:true, away:"ドジャース", home:"パドレス", hcapSide:"ドジャース", hcap:"1半", start:"8:05", deadline: t0-11*3600*1000, status:"final", live:{a:5,h:3,inning:"9回裏"}, pool:{a:96000,h:64000,bets:52}},
-    {id:8, lg:"MLB", ext:true, away:"ヤンキース", home:"レッドソックス", hcapSide:"ヤンキース", hcap:"1.3", start:"8:35", deadline: t0-11*3600*1000, status:"final", live:{a:2,h:4,inning:"9回裏"}, pool:{a:71000,h:69000,bets:44}},
+    {id:8, lg:"MLB", ext:true, away:"ヤンキース", home:"レッドソックス", hcapSide:"ヤンキース", hcap:"1.3", start:"8:35", deadline: t0-11*3600*1000, status:"final", live:{a:5,h:4,inning:"9回裏"}, pool:{a:71000,h:69000,bets:44}},  // 出し1.3で1点差勝ち＝3分負け（分負けの検証用）
     {id:9, lg:"MLB", ext:true, away:"カブス", home:"メッツ", hcapSide:"メッツ", hcap:"0.7", start:"9:10", deadline: t0-10*3600*1000, status:"final", live:{a:3,h:4,inning:"延長11回"}, pool:{a:38000,h:55000,bets:29}},
   ];
 }
@@ -705,7 +705,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.5.0：ユニオン管理ページに試合別損益のリアルタイム表示（見込み・確定「+受入 −支払」）を追加しました"},
+    {d:"8/28", t:"v0.6.0：ユニオン管理のベット／データページに試合別損益（差し引き・レーキ・レーキバックの内訳付き）を追加しました"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1038,28 +1038,102 @@ function finalize(m){
     toast(`${key} の結果が確定しました（${resText}）`);
   }
 }
-/* 試合別のユニオン損益（プール×ハンデ判定から算出） */
+/* 試合別のユニオン損益（1試合ずつの精算式）
+   差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）
+   レーキ＝勝ち分×手数料率／レーキバック＝レーキ×エージェントバック率
+   ユニオン損益＝差し引き＋レーキ−レーキバック（勝負無しはすべて0） */
 function unionMatchPnl(m){
   if(m.status!=="live" && m.status!=="final") return null;
-  const out = handeOutcome(m.hcap, matchMargin(m));
-  const fracA = (m.hcapSide===m.away) ? out : -out;   // awayサイドのベット勢の結果
-  const fracH = -fracA;
-  const side = (vol, f)=> f>0
-    ? {inflow:0, payout: vol*f/10*(1-state.feeRate/100)}   // 勝ち側へ配当支払（手数料は差し引き＝ユニオン残）
-    : f<0 ? {inflow: vol*(-f)/10, payout:0}                 // 負け側から受入（分負けは割合分のみ）
-    : {inflow:0, payout:0};                                  // 勝負無しは全額返還＝損益ゼロ
-  const x = side(m.pool.a, fracA), y = side(m.pool.h, fracH);
-  const inflow = Math.round(x.inflow + y.inflow);
-  const payout = Math.round(x.payout + y.payout);
-  return {inflow, payout, net: inflow - payout};
+  const out = handeOutcome(m.hcap, matchMargin(m));   // 出し側視点の判定（±10=丸、±k=k分）
+  const fracA = (m.hcapSide===m.away) ? out : -out;   // away側ベット勢から見た判定
+  const abs = Math.abs(fracA);
+  let winSide=null, loseSide=null, winPool=0, losePool=0;
+  if(fracA>0){ winSide=m.away; loseSide=m.home; winPool=m.pool.a; losePool=m.pool.h; }
+  if(fracA<0){ winSide=m.home; loseSide=m.away; winPool=m.pool.h; losePool=m.pool.a; }
+  const winAmt  = Math.round(winPool*abs/10);             // 勝ち側へ支払う勝ち分（丸=100%／k分=k×10%）
+  const loseAmt = Math.round(losePool*abs/10);            // 負け側から受け入れる没収分
+  const diff = loseAmt - winAmt;                          // 差し引き
+  const rake = Math.round(winAmt*state.feeRate/100);      // レーキ（勝ち分の手数料）
+  const back = Math.round(rake*state.agentBackRate/100);  // レーキバック（レーキ×バック率）
+  const net  = diff + rake - back;                        // ユニオン損益
+  return {out, fracA, winSide, loseSide, winPool, losePool, winAmt, loseAmt, diff, rake, back, net};
 }
 function upnlHTML(m){
-  const pl = unionMatchPnl(m);
-  if(!pl) return '<span style="color:var(--muted);font-size:11px">開始後に表示</span>';
+  const c = unionMatchPnl(m);
+  if(!c) return '<span style="color:var(--muted);font-size:11px">開始後に表示</span>';
+  if(c.out===0) return `<b>±0P</b><br><span style="font-size:10px;color:var(--muted)">勝負無し・全額返還</span>`;
   if(m.status==="final"){
-    return `<span class="pos">+${yen(pl.inflow)}</span> <span class="neg">−${yen(pl.payout)}</span><br><b class="${pl.net>=0?"pos":"neg"}">純益 ${sign(pl.net)}P</b>`;
+    return `<b class="${c.net>=0?"pos":"neg"}">${sign(c.net)}P</b><br><span style="font-size:10px;color:var(--muted)">差引${sign(c.diff)}・レーキ+${yen(c.rake)}・バック−${yen(c.back)}</span>`;
   }
-  return `<span style="color:var(--muted);font-size:10px">見込み</span> <b class="${pl.net>=0?"pos":"neg"}">${sign(pl.net)}P</b>`;
+  return `<span style="color:var(--muted);font-size:10px">見込み</span> <b class="${c.net>=0?"pos":"neg"}">${sign(c.net)}P</b>`;
+}
+/* ベットページ（ユニオン管理）：試合ごとの損益を一目で */
+function upnlBoxHTML(m){
+  const c = unionMatchPnl(m);
+  if(!c) return "";
+  const fin = m.status==="final";
+  const pd = m.pool.a - m.pool.h;
+  const head = `
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;flex-wrap:wrap">
+      <span><b>${esc(m.away)}</b>${m.hcapSide===m.away?` <span class="amb">出し ${esc(m.hcap)}</span>`:""}　<b class="num">${yen(m.pool.a)}P</b></span>
+      <span><b>${esc(m.home)}</b>${m.hcapSide===m.home?` <span class="amb">出し ${esc(m.hcap)}</span>`:""}　<b class="num">${yen(m.pool.h)}P</b></span>
+      <span style="color:var(--muted)">差異 <b class="num" style="color:var(--text)">${yen(Math.abs(pd))}P</b>（${pd>=0? esc(m.away): esc(m.home)}側が多い）</span>
+    </div>`;
+  if(c.out===0){
+    return head + `<div class="hint" style="margin-top:6px">${liveJudge(m)} — ユニオン損益 <b>±0P</b>（全ベット返還・レーキなし）</div>`;
+  }
+  return head + `
+    <div style="margin-top:6px;font-size:13px">${liveJudge(m)}のため ユニオンは <b class="num ${c.net>=0?"pos":"neg"}" style="font-size:17px">${sign(c.net)}P</b>${fin?"":"（見込み）"}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">内訳：差し引き ${sign(c.diff)}P（受入 ${yen(c.loseAmt)} − 支払 ${yen(c.winAmt)}）＋ レーキ ${yen(c.rake)}P − レーキバック ${yen(c.back)}P</div>`;
+}
+function unionPnlCards(){
+  const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
+  if(!list.length) return '<div class="panel empty">試合中・終了の試合はありません</div>';
+  return `<div class="uni-list">${list.map(m=>`
+    <div class="panel" style="padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:7px">
+        ${m.status==="final"? '<span class="pill closed">確定</span>':'<span class="livepill">LIVE</span>'}
+        <span class="pill">${m.lg}</span>
+        <strong style="color:var(--text);font-size:13px">${esc(m.away)} - ${esc(m.home)}</strong>
+        <span class="num amb" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span data-linning="${m.id}">${m.status==="final"? finLabel(m): m.live.inning}</span>
+      </div>
+      <div data-upnlbox="${m.id}">${upnlBoxHTML(m)}</div>
+    </div>`).join("")}</div>`;
+}
+/* データページ（ユニオン管理）：1試合ずつの精算記録 */
+function upnlRecBodyHTML(m){
+  const c = unionMatchPnl(m);
+  const row = (k,v,cls="") => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:5px 0;font-size:12.5px"><span style="color:var(--muted)">${k}</span><b class="num ${cls}">${v}</b></div>`;
+  if(c.out===0){
+    return row(esc(m.away), yen(m.pool.a)+"P") + row(esc(m.home), yen(m.pool.h)+"P") +
+           row("判定", "勝負無し（全額返還）") + row("ユニオン", "±0P");
+  }
+  return row(`${esc(c.winSide)}（勝ち側）`, yen(c.winPool)+"P") +
+         row(`${esc(c.loseSide)}（負け側）`, yen(c.losePool)+"P") +
+         row("差し引き（受入 − 支払）", sign(c.diff)+"P", c.diff>=0?"pos":"neg") +
+         row(`レーキ（勝ち分の${state.feeRate.toFixed(0)}%）`, "+"+yen(c.rake)+"P", "amb") +
+         row(`レーキバック（レーキの${state.agentBackRate}%）`, "−"+yen(c.back)+"P") +
+         row("ユニオン", sign(c.net)+"P", c.net>=0?"pos":"neg");
+}
+function unionPnlRecords(){
+  const list = [...state.matches.filter(m=>m.status==="final"), ...state.matches.filter(m=>m.status==="live")];
+  if(!list.length) return '<div class="panel empty">記録対象の試合はありません（結果確定後にここへ1試合ずつ記録されます）</div>';
+  return `<div class="uni-list">${list.map(m=>{
+    const fin = m.status==="final";
+    return `
+    <div class="panel" style="padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:6px">
+        ${fin? '<span class="pill closed">精算済</span>':'<span class="pill stop">試合中・見込み</span>'}
+        <span class="pill">${m.lg}</span>
+        <strong style="color:var(--text);font-size:13px">${esc(m.away)} - ${esc(m.home)}</strong>
+        <span class="num" data-lscore="${m.id}">${m.live.a} - ${m.live.h}</span>
+        <span>出し ${esc(m.hcapSide)} ${esc(m.hcap)}・<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
+      </div>
+      <div data-upnlrec="${m.id}">${upnlRecBodyHTML(m)}</div>
+    </div>`;
+  }).join("")}</div>
+  <p class="hint">差し引き＝負け側からの受入（没収分）− 勝ち側への支払（勝ち分・レーキ前）。レーキ＝勝ち分×手数料率。レーキバック＝レーキ×エージェントバック率（現在 ${state.agentBackRate}%）。<b>分勝ち・分負けは該当割合（k分＝k×10%）のみ</b>が精算対象、勝負無しは全額返還で損益0です。</p>`;
 }
 function finLabel(m){
   return m.live.inning.startsWith("延長") ? `FINAL・${m.live.inning}` : "FINAL";
@@ -1128,6 +1202,8 @@ function updateLive(){
     document.querySelectorAll(`[data-linning="${m.id}"]`).forEach(el=>el.textContent = m.status==="final"? finLabel(m) : m.live.inning);
     document.querySelectorAll(`[data-ljudge="${m.id}"]`).forEach(el=>el.textContent=liveJudge(m));
     document.querySelectorAll(`[data-upnl="${m.id}"]`).forEach(el=>el.innerHTML=upnlHTML(m));
+    document.querySelectorAll(`[data-upnlbox="${m.id}"]`).forEach(el=>el.innerHTML=upnlBoxHTML(m));
+    document.querySelectorAll(`[data-upnlrec="${m.id}"]`).forEach(el=>el.innerHTML=upnlRecBodyHTML(m));
   });
   // ユニオンホームの本日損益カード
   const fins = state.matches.filter(m=>m.status==="final").reduce((a,m)=>a+(unionMatchPnl(m)?.net||0),0);
@@ -2145,6 +2221,8 @@ function renderBet(){
     el.innerHTML = `
       <h2 class="sec"><span class="live"></span>試合速報 — ベット受付は終了・結果確定後に自動精算</h2>
       ${liveTable(true)}
+      <h2 class="sec"><span class="live"></span>試合別 ユニオン損益 — 一目でわかる差異と精算</h2>
+      ${unionPnlCards()}
       <h2 class="sec">試合・ハンデ管理（ナイター）— タップして編集</h2>
       ${hcapTable()}
       <h2 class="sec"><span class="live"></span>試合別 予想ポイント（リアルタイム）</h2>
@@ -2624,6 +2702,8 @@ ${card("レーキバック総額（今月）", yen(Math.round(s.agentGross))+"<s
         ${card('<span class="live"></span>本日の予想プール', `<span data-pool-all>—</span>`, "リアルタイム")}
         ${card("今月ベット総額", yen(calc.unionVol())+"<small>P</small>", "エージェント配下の合計")}
       </div>
+      <h2 class="sec">試合別 損益記録 — 1試合ずつの精算内訳</h2>
+      ${unionPnlRecords()}
       <h2 class="sec">エージェント別 支払サマリー（今月）— 行をタップで詳細ページへ</h2>
       <div class="panel tblwrap"><table>
         <thead><tr><th>エージェント</th><th>配下</th><th>配下ベット総額</th><th>バック率</th><th>支払P</th><th></th><th></th></tr></thead>
@@ -2753,7 +2833,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.5.0-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.6.0-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
