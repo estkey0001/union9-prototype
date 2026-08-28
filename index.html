@@ -353,7 +353,7 @@
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <a href="#" class="open-terms">利用規約</a>・<a href="#" class="open-terms">ポイントについて</a><br>
-      UIプロトタイプ v0.7.3
+      UIプロトタイプ v0.7.4
     </div>
   </aside>
 
@@ -457,7 +457,7 @@
       <div class="a-err" id="r-err"></div>
       <button class="btn primary" id="r-btn">アカウント作成 — ユーザーIDを発行</button>
     </div>
-    <div class="a-foot">UNION9 UIプロトタイプ v0.7.3 — 認証はモックです。入力情報はどこにも送信されません。</div>
+    <div class="a-foot">UNION9 UIプロトタイプ v0.7.4 — 認証はモックです。入力情報はどこにも送信されません。</div>
   </div>
 </div>
 
@@ -706,7 +706,7 @@ const state = {
     {name:"名古屋グランド会",       owner:"nagoya_g",  members:41,  fee:15.0, vol:"0.9M", status:"stopped"},
   ],
   notices: [
-    {d:"8/28", t:"v0.7.3：ユニオン管理を整理（予想ポイント表の行タップでハンデ・締切を編集／損益カードのレイアウトを刷新）"},
+    {d:"8/28", t:"v0.7.4：ユニオン管理の試合速報カードをユニオン損益のみのシンプル表示にしました（内訳はデータページへ）"},
     {d:"8/27", t:"9/1 のアップデートでベット履歴のCSV出力に対応予定です"},
     {d:"8/26", t:"レーキバックの週次精算は毎週月曜 9:00 に自動実行されます"},
     {d:"8/25", t:"新ユニオン「東北イーグルス会」が審査中です"},
@@ -1084,17 +1084,15 @@ function upnlBoxHTML(m){
       <span>${fin?"結果":"判定"}：<b class="amb" data-ljudge="${m.id}">${liveJudge(m)}</b></span>
       <span style="color:var(--muted)">差異 <b class="num" style="color:var(--text)">${yen(Math.abs(pd))}P</b>（${pd>=0? esc(m.away): esc(m.home)}側が多い）</span>
     </div>`;
-  if(c.out===0){
-    return bar + judgeLine + `<div class="hint" style="margin-top:8px">勝負無しのため全ベット返還 — ユニオン損益 <b>±0P</b>（レーキ・レーキバックなし）</div>`;
-  }
-  const box = (k,v,cls="") => `<div><div class="k">${k}</div><div class="n ${cls}">${v}</div></div>`;
-  return bar + judgeLine + `
-    <div class="pstats" style="margin:10px 0 0">
-      ${box("差し引き", sign(c.diff)+"P", c.diff>=0?"pos":"neg")}
-      ${box("レーキ", "+"+yen(c.rake)+"P", "amb")}
-      ${box("レーキバック", "−"+yen(c.back)+"P")}
-      ${box(`ユニオン損益${fin?"":"（見込み）"}`, sign(c.net)+"P", c.net>=0?"pos":"neg")}
+  const netLine = (label, val, cls) => `
+    <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:8px;margin-top:8px;border-top:1px solid var(--line);padding-top:8px">
+      <span style="font-size:11px;color:var(--muted)">${label}</span>
+      <b class="num ${cls}" style="font-size:20px">${val}</b>
     </div>`;
+  if(c.out===0){
+    return bar + judgeLine + netLine("ユニオン損益（全ベット返還）", "±0P", "");
+  }
+  return bar + judgeLine + netLine(`ユニオン損益${fin?"":"（見込み）"}`, sign(c.net)+"P", c.net>=0?"pos":"neg");
 }
 function unionPnlCards(){
   const list = state.matches.filter(m=>m.status==="live"||m.status==="final");
@@ -2291,9 +2289,9 @@ function renderBet(){
       return;
     }
     el.innerHTML = `
-      <h2 class="sec"><span class="live"></span>試合速報・ユニオン損益 — 試合ごとの差異と精算を一目で</h2>
+      <h2 class="sec"><span class="live"></span>試合速報</h2>
       ${unionPnlCards()}
-      <h2 class="sec"><span class="live"></span>受付中の試合 予想ポイント（リアルタイム）— タップでハンデ・締切を設定</h2>
+      <h2 class="sec"><span class="live"></span>受付中の試合</h2>
       ${poolTable(true, true)}`;
   }
   if(state.role==="admin"){
@@ -2909,7 +2907,7 @@ function renderSettings(){
       </div>
       <div class="setrow">
         <div><div class="t">バージョン</div></div>
-        <span class="end num" style="color:var(--muted)">v0.7.3-proto</span>
+        <span class="end num" style="color:var(--muted)">v0.7.4-proto</span>
       </div>
       <div class="setrow">
         <div><div class="t">デモデータをリセット</div><div class="desc">残高・履歴・設定を初期状態に戻します（右下の🎮からも操作可）</div></div>
