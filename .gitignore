@@ -1,0 +1,20 @@
+# Netlify のローカル設定。絶対パス（ユーザー名を含む）が書かれるためコミットしない
+.netlify/
+
+# 依存とビルド成果物
+node_modules/
+dist/
+build/
+.cache/
+
+# 環境変数
+.env
+.env.*
+!.env.example
+
+# OS が作るもの
+.DS_Store
+
+# 事業企画書など非公開の資料。このリポジトリは PUBLIC なのでコミットしない
+docs/
+*.docx
